@@ -6,6 +6,8 @@ COPY requirements.txt ${LAMBDA_TASK_ROOT}
 # Install the specified packages
 RUN pip install -r requirements.txt && rm -frv /root/.cache
 
+COPY nonono.jpg ${LAMBDA_TASK_ROOT}
+
 # Copy function code
 COPY proxy.py ${LAMBDA_TASK_ROOT}
 

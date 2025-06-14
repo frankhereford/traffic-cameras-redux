@@ -95,11 +95,28 @@ def handler(event, context):
                     print("Decoded JWT (unverified): " + json.dumps(decoded_token, indent=2))
 
             except jwt.InvalidTokenError as e:
-                print(f"Invalid JWT: {e}")
-                return {
-                    "statusCode": 401,
-                    "body": json.dumps({"error": "Invalid or expired token"}),
-                }
+                print(f"Invalid JWT: {e}. Serving fallback image.")
+                try:
+                    # Look for nonono.jpg in the same directory as this script
+                    script_dir = os.path.dirname(__file__)
+                    fallback_path = os.path.join(script_dir, "nonono.jpg")
+                    with open(fallback_path, "rb") as f:
+                        image_bytes = f.read()
+
+                    encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+
+                    return {
+                        "statusCode": 200,
+                        "headers": {"Content-Type": "image/jpeg"},
+                        "isBase64Encoded": True,
+                        "body": encoded_image,
+                    }
+                except FileNotFoundError:
+                    print("Fallback image 'nonono.jpg' not found.")
+                    return {
+                        "statusCode": 500,
+                        "body": json.dumps({"error": "Fallback image not found"}),
+                    }
 
         cache_key = "camera:395"
         image_bytes = None
