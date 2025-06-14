@@ -4,7 +4,7 @@ services:
     ports:
       - 6543:5432
     env_file:
-      - env
+      - .env
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./postgis/server.crt:/etc/ssl/server.crt:ro
@@ -12,5 +12,27 @@ services:
       - ./postgis/init.sh:/docker-entrypoint-initdb.d/init.sh
     command: postgres -c ssl=on -c ssl_cert_file=/etc/ssl/server.crt -c ssl_key_file=/etc/ssl/server.key
 
+  redis:
+    image: redis/redis-stack-server
+    ports:
+      - 6379:6379
+    env_file:
+      - .env
+    volumes:
+      - redis_data:/data
+      - ./redis/server.crt:/etc/ssl/server.crt:ro
+      - ./redis/server.key:/etc/ssl/server.key:ro
+    command: >
+      redis-server
+      --loglevel verbose
+      --tls-port 6379
+      --port 0
+      --requirepass ${REDIS_PASSWORD}
+      --tls-cert-file /etc/ssl/server.crt
+      --tls-key-file /etc/ssl/server.key
+      --tls-ca-cert-file /etc/ssl/server.crt
+      --tls-auth-clients no
+
 volumes:
   db_data:
+  redis_data:
