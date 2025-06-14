@@ -90,6 +90,14 @@ def handler(event, context):
         Dict compatible with Lambda Function URL / API Gateway
     """
     try:
+        # Return 404 for favicon requests early to avoid further processing.
+        if event.get("rawPath") == "/favicon.ico":
+            print("Favicon request suppressed.")
+            return {
+                "statusCode": 404,
+                "body": json.dumps({"error": "Not Found"}),
+            }
+
         print("Received event: " + json.dumps(event, indent=2))
 
         # Check for JWT in header or query string
