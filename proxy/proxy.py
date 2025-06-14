@@ -54,6 +54,32 @@ def _get_redis_client():
     return _redis_client
 
 
+def _serve_fallback_image(reason):
+    """Log the reason and return a response to serve the fallback image."""
+    print(f"{reason}. Serving fallback image.")
+    try:
+        # Look for nonono.jpg in the same directory as this script
+        script_dir = os.path.dirname(__file__)
+        fallback_path = os.path.join(script_dir, "nonono.jpg")
+        with open(fallback_path, "rb") as f:
+            image_bytes = f.read()
+
+        encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+
+        return {
+            "statusCode": 200,
+            "headers": {"Content-Type": "image/jpeg"},
+            "isBase64Encoded": True,
+            "body": encoded_image,
+        }
+    except FileNotFoundError:
+        print("Fallback image 'nonono.jpg' not found.")
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": "Fallback image not found"}),
+        }
+
+
 def handler(event, context):
     """
     Main Lambda handler function
@@ -76,49 +102,38 @@ def handler(event, context):
         if query_params and "x-camera" in query_params:
             jwt_token = query_params["x-camera"]
 
-        if jwt_token:
-            try:
-                # Decode the JWT, verifying the signature
-                jwt_secret = os.environ.get("JWT_SHARED_SECRET")
-                if jwt_secret:
-                    decoded_token = jwt.decode(
-                        jwt_token,
-                        jwt_secret,
-                        algorithms=["HS256"]
-                    )
-                    print("Decoded and verified JWT: " + json.dumps(decoded_token, indent=2))
-                else:
-                    # For now, if no secret is configured, just log and decode without verification.
-                    # In a production environment, you would likely want to fail hard here.
-                    print("Warning: JWT_SECRET not configured. Decoding without verification.")
-                    decoded_token = jwt.decode(jwt_token, options={"verify_signature": False})
-                    print("Decoded JWT (unverified): " + json.dumps(decoded_token, indent=2))
+        if not jwt_token:
+            return _serve_fallback_image("No JWT provided")
 
-            except jwt.InvalidTokenError as e:
-                print(f"Invalid JWT: {e}. Serving fallback image.")
-                try:
-                    # Look for nonono.jpg in the same directory as this script
-                    script_dir = os.path.dirname(__file__)
-                    fallback_path = os.path.join(script_dir, "nonono.jpg")
-                    with open(fallback_path, "rb") as f:
-                        image_bytes = f.read()
+        try:
+            # Decode the JWT, verifying the signature
+            jwt_secret = os.environ.get("JWT_SHARED_SECRET")
+            if jwt_secret:
+                decoded_token = jwt.decode(
+                    jwt_token,
+                    jwt_secret,
+                    algorithms=["HS256"]
+                )
+                print("Decoded and verified JWT: " + json.dumps(decoded_token, indent=2))
+            else:
+                # For now, if no secret is configured, just log and decode without verification.
+                # In a production environment, you would likely want to fail hard here.
+                print("Warning: JWT_SECRET not configured. Decoding without verification.")
+                decoded_token = jwt.decode(jwt_token, options={"verify_signature": False})
+                print("Decoded JWT (unverified): " + json.dumps(decoded_token, indent=2))
+            
+            # If we're here, token was decoded. Try to get camera ID.
+            camera_id = str(decoded_token["coaCamera"])
+            print(f"Using camera ID from JWT: {camera_id}")
 
-                    encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+        except (jwt.InvalidTokenError, KeyError, TypeError) as e:
+            if isinstance(e, jwt.InvalidTokenError):
+                reason = f"Invalid JWT: {e}"
+            else:
+                reason = "JWT decoded, but missing 'coaCamera' claim or not a dictionary"
+            return _serve_fallback_image(reason)
 
-                    return {
-                        "statusCode": 200,
-                        "headers": {"Content-Type": "image/jpeg"},
-                        "isBase64Encoded": True,
-                        "body": encoded_image,
-                    }
-                except FileNotFoundError:
-                    print("Fallback image 'nonono.jpg' not found.")
-                    return {
-                        "statusCode": 500,
-                        "body": json.dumps({"error": "Fallback image not found"}),
-                    }
-
-        cache_key = "camera:395"
+        cache_key = f"camera:{camera_id}"
         image_bytes = None
 
         # Attempt to fetch the image from Redis first
@@ -135,7 +150,7 @@ def handler(event, context):
         # If not cached, download from the Austin Mobility CCTV feed
         if image_bytes is None:
             print("Cache miss – downloading image from source")
-            image_url = "https://cctv.austinmobility.io/image/395.jpg"
+            image_url = f"https://cctv.austinmobility.io/image/{camera_id}.jpg"
             with urllib.request.urlopen(image_url) as img_response:
                 image_bytes = img_response.read()
 
