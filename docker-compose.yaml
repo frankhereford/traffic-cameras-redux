@@ -7,9 +7,9 @@ services:
       - env
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./postgres-ssl/server.crt:/etc/ssl/server.crt:ro
-      - ./postgres-ssl/server.key:/etc/ssl/server.key:ro
-      - ./postgres-ssl/init.sh:/docker-entrypoint-initdb.d/init.sh
+      - ./postgis/server.crt:/etc/ssl/server.crt:ro
+      - ./postgis/server.key:/etc/ssl/server.key:ro
+      - ./postgis/init.sh:/docker-entrypoint-initdb.d/init.sh
     command: postgres -c ssl=on -c ssl_cert_file=/etc/ssl/server.crt -c ssl_key_file=/etc/ssl/server.key
 
 volumes:
