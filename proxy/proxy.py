@@ -4,6 +4,7 @@ import base64
 import os
 import ssl
 import redis
+import jwt
 
 # Lazily-initialised module-level Redis client.  This allows the same
 # connection to be reused across multiple Lambda invocations that share the
@@ -63,7 +64,25 @@ def handler(event, context):
         Dict compatible with Lambda Function URL / API Gateway
     """
     try:
-        print("Received event: " + json.dumps(event, indent=2)) # keep this comment
+        print("Received event: " + json.dumps(event, indent=2))
+
+        # Check for JWT in header or query string
+        jwt_token = None
+        headers = {k.lower(): v for k, v in event.get("headers", {}).items()}
+        if "x-camera" in headers:
+            jwt_token = headers["x-camera"]
+        
+        query_params = event.get("queryStringParameters")
+        if query_params and "x-camera" in query_params:
+            jwt_token = query_params["x-camera"]
+
+        if jwt_token:
+            try:
+                # Decode the JWT without verifying the signature
+                decoded_token = jwt.decode(jwt_token, options={"verify_signature": False})
+                print("Decoded JWT: " + json.dumps(decoded_token, indent=2))
+            except jwt.InvalidTokenError as e:
+                print(f"Invalid JWT: {e}")
 
         cache_key = "camera:395"
         image_bytes = None
