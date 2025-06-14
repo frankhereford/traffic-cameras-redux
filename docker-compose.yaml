@@ -2,7 +2,7 @@ services:
   postgis:
     image: postgis/postgis
     ports:
-      - 6543:5432
+      - 5433:5432
     env_file:
       - .env
     volumes:
@@ -42,11 +42,23 @@ services:
       - ~/.aws-lambda-rie:/aws-lambda
     entrypoint: /aws-lambda/aws-lambda-rie
     command: /var/lang/bin/python -m awslambdaric proxy.handler
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - .env
     depends_on:
       - postgis
       - redis
+
+  proxy-url:
+    image: daido1976/aws-lambda-function-url-emulator
+    ports:
+      - "8080:8080"
+    environment:
+      # Specify the internal port of the lambda rie container
+      RIE_ENDPOINT: "http://proxy:8080/2015-03-31/functions/function/invocations"
+    depends_on:
+      - proxy
 
 volumes:
   db_data:
