@@ -179,9 +179,17 @@ def handler(event, context):
 
                 img = Image.open(io.BytesIO(original_image_bytes)).convert("RGBA")
 
+                # Define a baseline for scaling UI elements. 1080p is a common standard.
+                base_height = 1080.0
+                scale_factor = img.height / base_height
+
+                # Scale font size and margin based on the image's vertical resolution.
+                # Ensure a minimum size of 1 to avoid errors with tiny images.
+                font_size = max(1, int(32 * scale_factor))
+                margin = max(1, int(10 * scale_factor))
+
                 # Try to load a suitable fixed-width font
                 font = None
-                font_size = 32 
                 # Common paths for fonts in Lambda/Linux environments
                 font_paths = [
                     "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
@@ -206,14 +214,9 @@ def handler(event, context):
                 draw = ImageDraw.Draw(img)
 
                 # Position text in the upper right corner
-                margin = 10
-                try:
-                    # Pillow >= 10.0.0
-                    text_bbox = draw.textbbox((0, 0), hash_prefix, font=font)
-                    text_width = text_bbox[2] - text_bbox[0]
-                except AttributeError:
-                    # Pillow < 10.0.0
-                    text_width, _ = draw.textsize(hash_prefix, font=font)
+                text_bbox = draw.textbbox((0, 0), hash_prefix, font=font)
+                text_width = text_bbox[2] - text_bbox[0]
+
 
                 x = img.width - text_width - margin
                 y = margin
