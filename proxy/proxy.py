@@ -101,7 +101,7 @@ def handler(event, context):
                 "body": json.dumps({"error": "Not Found"}),
             }
 
-        print("Received event: " + json.dumps(event, indent=2))
+        #print("Received event: " + json.dumps(event, indent=2))
 
         # Check for JWT in header or query string
         jwt_token = None
