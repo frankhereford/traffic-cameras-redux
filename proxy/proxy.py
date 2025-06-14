@@ -137,6 +137,9 @@ def handler(event, context):
             camera_id = str(decoded_token["coaCamera"])
             print(f"Using camera ID from JWT: {camera_id}")
 
+            # Check for no-cache directive in JWT
+            skip_cache = decoded_token.get("no-cache", False)
+
         except (jwt.InvalidTokenError, KeyError, TypeError) as e:
             if isinstance(e, jwt.InvalidTokenError):
                 reason = f"Invalid JWT: {e}"
@@ -150,13 +153,16 @@ def handler(event, context):
         # Attempt to fetch the image from Redis first
         redis_client = _get_redis_client()
         if redis_client:
-            try:
-                cached = redis_client.get(cache_key)
-                if cached:
-                    print("Cache hit – serving image from Redis")
-                    image_bytes = cached
-            except Exception as r_err:
-                print(f"Failed to fetch from Redis cache: {r_err}")
+            if skip_cache:
+                print("'no-cache' in JWT, skipping Redis lookup.")
+            else:
+                try:
+                    cached = redis_client.get(cache_key)
+                    if cached:
+                        print("Cache hit – serving image from Redis")
+                        image_bytes = cached
+                except Exception as r_err:
+                    print(f"Failed to fetch from Redis cache: {r_err}")
 
         # If not cached, download from the Austin Mobility CCTV feed
         if image_bytes is None:
@@ -231,7 +237,7 @@ def handler(event, context):
                 image_bytes = original_image_bytes
 
             # Store the fresh result in Redis (TTL 60 seconds)
-            if redis_client:
+            if redis_client and not skip_cache:
                 try:
                     redis_client.setex(cache_key, 60, image_bytes)
                     print("Stored image in Redis with TTL=60s")
