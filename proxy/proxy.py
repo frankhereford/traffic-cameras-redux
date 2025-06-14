@@ -7,6 +7,7 @@ import redis
 import jwt
 import hashlib
 import io
+import boto3
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 # Lazily-initialised module-level Redis client.  This allows the same
@@ -127,12 +128,23 @@ def handler(event, context):
                 )
                 print("Decoded and verified JWT: " + json.dumps(decoded_token, indent=2))
             else:
-                # For now, if no secret is configured, just log and decode without verification.
-                # In a production environment, you would likely want to fail hard here.
-                print("Warning: JWT_SECRET not configured. Decoding without verification.")
-                decoded_token = jwt.decode(jwt_token, options={"verify_signature": False})
-                print("Decoded JWT (unverified): " + json.dumps(decoded_token, indent=2))
-            
+                # JWT_SECRET not configured. Log the attempted token payload and reject.
+                print("Warning: JWT_SHARED_SECRET is not configured. Rejecting request.")
+                try:
+                    unverified_payload = jwt.decode(
+                        jwt_token, options={"verify_signature": False}
+                    )
+                    print(
+                        "Attempted JWT payload (unverified): "
+                        + json.dumps(unverified_payload, indent=2)
+                    )
+                except jwt.InvalidTokenError as e:
+                    print(f"Malformed JWT provided, could not decode for logging: {e}")
+
+                return _serve_fallback_image(
+                    "JWT signature cannot be verified by server"
+                )
+
             # If we're here, token was decoded. Try to get camera ID.
             camera_id = str(decoded_token["coaCamera"])
             print(f"Using camera ID from JWT: {camera_id}")
@@ -176,6 +188,36 @@ def handler(event, context):
                 sha256_hash = hashlib.sha256(original_image_bytes).hexdigest()
                 hash_prefix = sha256_hash[:8]
                 print(f"Image SHA256: {sha256_hash}, using prefix: {hash_prefix}")
+
+                try:
+                    s3_bucket = os.environ.get("S3_BUCKET_NAME", "atx-traffic-cameras")
+                    s3_key = f"cameras/{camera_id}/{sha256_hash}.jpg"
+
+                    s3 = boto3.client(
+                        "s3",
+                        aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID"),
+                        aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY"),
+                        region_name=os.environ.get("AWS_REGION", "us-east-1"),
+                    )
+
+                    try:
+                        s3.head_object(Bucket=s3_bucket, Key=s3_key)
+                        print(f"File already exists in S3: s3://{s3_bucket}/{s3_key}, skipping upload.")
+                    except s3.exceptions.ClientError as e:
+                        if e.response["Error"]["Code"] == "404":
+                            print(f"Uploading image to S3: s3://{s3_bucket}/{s3_key}")
+                            s3.upload_fileobj(
+                                io.BytesIO(original_image_bytes),
+                                s3_bucket,
+                                s3_key,
+                                ExtraArgs={"ContentType": "image/jpeg"},
+                            )
+                            print("Successfully uploaded to S3.")
+                        else:
+                            # Log other client errors
+                            print(f"Error checking S3 for {s3_key}: {e}")
+                except Exception as s3_err:
+                    print(f"An error occurred during S3 operation: {s3_err}")
 
                 img = Image.open(io.BytesIO(original_image_bytes)).convert("RGBA")
 
