@@ -78,11 +78,28 @@ def handler(event, context):
 
         if jwt_token:
             try:
-                # Decode the JWT without verifying the signature
-                decoded_token = jwt.decode(jwt_token, options={"verify_signature": False})
-                print("Decoded JWT: " + json.dumps(decoded_token, indent=2))
+                # Decode the JWT, verifying the signature
+                jwt_secret = os.environ.get("JWT_SHARED_SECRET")
+                if jwt_secret:
+                    decoded_token = jwt.decode(
+                        jwt_token,
+                        jwt_secret,
+                        algorithms=["HS256"]
+                    )
+                    print("Decoded and verified JWT: " + json.dumps(decoded_token, indent=2))
+                else:
+                    # For now, if no secret is configured, just log and decode without verification.
+                    # In a production environment, you would likely want to fail hard here.
+                    print("Warning: JWT_SECRET not configured. Decoding without verification.")
+                    decoded_token = jwt.decode(jwt_token, options={"verify_signature": False})
+                    print("Decoded JWT (unverified): " + json.dumps(decoded_token, indent=2))
+
             except jwt.InvalidTokenError as e:
                 print(f"Invalid JWT: {e}")
+                return {
+                    "statusCode": 401,
+                    "body": json.dumps({"error": "Invalid or expired token"}),
+                }
 
         cache_key = "camera:395"
         image_bytes = None
