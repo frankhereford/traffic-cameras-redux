@@ -267,7 +267,7 @@ def handler(event, context):
                 shadow_layer = Image.new('RGBA', img.size, (0, 0, 0, 0))
                 shadow_draw = ImageDraw.Draw(shadow_layer)
                 shadow_draw.text((x, y), hash_prefix, font=font, fill="black")
-                shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(radius=15))
+                shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(radius=5))
 
                 # Composite the shadow onto the image
                 img = Image.alpha_composite(img, shadow_layer)
