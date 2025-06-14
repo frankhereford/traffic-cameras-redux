@@ -48,6 +48,16 @@ services:
       - postgis
       - redis
 
+  proxy-url:
+    image: daido1976/aws-lambda-function-url-emulator
+    ports:
+      - "8080:8080"
+    environment:
+      # Specify the internal port of the lambda rie container
+      RIE_ENDPOINT: "http://proxy:8080/2015-03-31/functions/function/invocations"
+    depends_on:
+      - proxy
+
 volumes:
   db_data:
   redis_data:
