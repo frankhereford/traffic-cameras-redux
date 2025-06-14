@@ -181,7 +181,7 @@ def handler(event, context):
 
                 # Try to load a suitable fixed-width font
                 font = None
-                font_size = 200 # Made ~10x bigger
+                font_size = 32 
                 # Common paths for fonts in Lambda/Linux environments
                 font_paths = [
                     "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
@@ -196,7 +196,12 @@ def handler(event, context):
                 
                 if not font:
                     print("Could not load a truetype font, falling back to default.")
-                    font = ImageFont.load_default()
+                    try:
+                        # Pillow >= 9.5.0 supports the size argument
+                        font = ImageFont.load_default(size=font_size)
+                    except AttributeError:
+                        print("Warning: Pillow version may not support 'size' for load_default(). Using default size.")
+                        font = ImageFont.load_default()
 
                 draw = ImageDraw.Draw(img)
 
