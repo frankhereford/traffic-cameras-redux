@@ -33,6 +33,14 @@ services:
       --tls-ca-cert-file /etc/ssl/server.crt
       --tls-auth-clients no
 
+  proxy:
+    build: ./proxy
+    ports:
+      - "5001:5001"
+    depends_on:
+      - postgis
+      - redis
+
 volumes:
   db_data:
   redis_data:
