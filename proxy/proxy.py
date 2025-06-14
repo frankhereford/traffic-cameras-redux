@@ -5,6 +5,9 @@ import os
 import ssl
 import redis
 import jwt
+import hashlib
+import io
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 # Lazily-initialised module-level Redis client.  This allows the same
 # connection to be reused across multiple Lambda invocations that share the
@@ -160,7 +163,72 @@ def handler(event, context):
             print("Cache miss – downloading image from source")
             image_url = f"https://cctv.austinmobility.io/image/{camera_id}.jpg"
             with urllib.request.urlopen(image_url) as img_response:
-                image_bytes = img_response.read()
+                original_image_bytes = img_response.read()
+
+            try:
+                # Calculate SHA256 hash of the original image
+                sha256_hash = hashlib.sha256(original_image_bytes).hexdigest()
+                hash_prefix = sha256_hash[:8]
+                print(f"Image SHA256: {sha256_hash}, using prefix: {hash_prefix}")
+
+                img = Image.open(io.BytesIO(original_image_bytes)).convert("RGBA")
+
+                # Try to load a suitable fixed-width font
+                font = None
+                font_size = 200 # Made ~10x bigger
+                # Common paths for fonts in Lambda/Linux environments
+                font_paths = [
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+                    "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf",
+                ]
+                for path in font_paths:
+                    try:
+                        font = ImageFont.truetype(path, font_size)
+                        break
+                    except IOError:
+                        continue
+                
+                if not font:
+                    print("Could not load a truetype font, falling back to default.")
+                    font = ImageFont.load_default()
+
+                draw = ImageDraw.Draw(img)
+
+                # Position text in the upper right corner
+                margin = 10
+                try:
+                    # Pillow >= 10.0.0
+                    text_bbox = draw.textbbox((0, 0), hash_prefix, font=font)
+                    text_width = text_bbox[2] - text_bbox[0]
+                except AttributeError:
+                    # Pillow < 10.0.0
+                    text_width, _ = draw.textsize(hash_prefix, font=font)
+
+                x = img.width - text_width - margin
+                y = margin
+
+                # Create a blurred black shadow
+                shadow_layer = Image.new('RGBA', img.size, (0, 0, 0, 0))
+                shadow_draw = ImageDraw.Draw(shadow_layer)
+                shadow_draw.text((x, y), hash_prefix, font=font, fill="black")
+                shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(radius=15))
+
+                # Composite the shadow onto the image
+                img = Image.alpha_composite(img, shadow_layer)
+
+                # Draw the white text on top
+                final_draw = ImageDraw.Draw(img)
+                final_draw.text((x, y), hash_prefix, font=font, fill="white")
+
+                # Save the modified image to a buffer
+                buffer = io.BytesIO()
+                img.convert("RGB").save(buffer, format="JPEG")
+                image_bytes = buffer.getvalue()
+
+            except Exception as img_err:
+                print(f"Failed to process image and add SHA overlay: {img_err}")
+                # Fall back to using the original, unmodified image
+                image_bytes = original_image_bytes
 
             # Store the fresh result in Redis (TTL 60 seconds)
             if redis_client:
