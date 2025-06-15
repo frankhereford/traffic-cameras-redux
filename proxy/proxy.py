@@ -64,7 +64,7 @@ def _get_redis_client():
     return _redis_client
 
 
-def _serve_fallback_image(reason):
+def _serve_fallback_image(reason, status_code=200):
     """Log the reason and return a response to serve the fallback image."""
     print(f"{reason}. Serving fallback image.")
     try:
@@ -77,7 +77,7 @@ def _serve_fallback_image(reason):
         encoded_image = base64.b64encode(image_bytes).decode("utf-8")
 
         return {
-            "statusCode": 200,
+            "statusCode": status_code,
             "headers": {"Content-Type": "image/jpeg"},
             "isBase64Encoded": True,
             "body": encoded_image,
@@ -211,7 +211,9 @@ def handler(event, context):
                     print(f"Camera {camera_id} is unavailable by hash match.")
                     # Don't cache or S3-upload this image. We can just stop,
                     # but serving the fallback is friendlier to the client.
-                    return _serve_fallback_image(f"Camera {camera_id} is unavailable.")
+                    return _serve_fallback_image(
+                        f"Camera {camera_id} is unavailable.", status_code=503
+                    )
 
                 try:
                     s3_bucket = os.environ.get("S3_BUCKET_NAME", "atx-traffic-cameras")
