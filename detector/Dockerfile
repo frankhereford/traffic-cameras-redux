@@ -6,10 +6,7 @@ COPY requirements.txt ${LAMBDA_TASK_ROOT}
 # Install the specified packages
 RUN pip install -r requirements.txt && rm -frv /root/.cache
 
-COPY nonono.jpg ${LAMBDA_TASK_ROOT}
-
-# Copy function code
-COPY proxy.py ${LAMBDA_TASK_ROOT}
+COPY detector.py ${LAMBDA_TASK_ROOT}
 
 # Set the CMD to your handler (could also be done as a parameter override outside of the Dockerfile)
-CMD [ "proxy.handler" ]
+CMD [ "detector.handler" ] 

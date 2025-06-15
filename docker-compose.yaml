@@ -36,8 +36,6 @@ services:
   proxy:
     build: proxy
     platform: linux/amd64
-    ports:
-      - "9000:8080"
     volumes:
       - ~/.aws-lambda-rie:/aws-lambda
     entrypoint: /aws-lambda/aws-lambda-rie
@@ -49,6 +47,21 @@ services:
     depends_on:
       - postgis
       - redis
+
+  detector:
+    build:
+      context: detector
+      args:
+        - BEAM_TOKEN
+    platform: linux/amd64
+    volumes:
+      - ~/.aws-lambda-rie:/aws-lambda
+    entrypoint: /aws-lambda/aws-lambda-rie
+    command: /var/lang/bin/python -m awslambdaric detector.handler
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env
 
   proxy-url:
     image: daido1976/aws-lambda-function-url-emulator
