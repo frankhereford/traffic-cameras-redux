@@ -9,6 +9,8 @@ import hashlib
 import io
 import boto3
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
+from prisma import Prisma
+
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": os.environ.get("CORS_VALID_ORIGIN", "*"),
@@ -20,6 +22,9 @@ CORS_HEADERS = {
 # connection to be reused across multiple Lambda invocations that share the
 # execution environment, dramatically reducing cold-start time.
 _redis_client = None
+
+db = Prisma()
+db.connect()
 
 
 def _get_redis_client():
