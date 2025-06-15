@@ -7,6 +7,7 @@ import boto3
 import tempfile
 import logging
 from PIL import Image as PILImage
+import jwt
 
 # Path to cache model weights
 BEAM_VOLUME_CACHE_PATH = "./weights"
@@ -64,9 +65,16 @@ def nvidia_smi_endpoint(**inputs):
     gpu="T4",
     on_start=download_models,
     volumes=[Volume(name="weights", mount_path=BEAM_VOLUME_CACHE_PATH)],
-    secrets=["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
+    secrets=["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "JWT_SHARED_SECRET"],
     image=Image(python_version="python3.12").add_python_packages(
-        ["transformers", "torch", "huggingface_hub[hf-transfer]", "Pillow", "boto3"]
+        [
+            "transformers",
+            "torch",
+            "huggingface_hub[hf-transfer]",
+            "Pillow",
+            "boto3",
+            "PyJWT",
+        ]
     ),
 )
 def object_detection_endpoint(context, **inputs):
@@ -74,7 +82,16 @@ def object_detection_endpoint(context, **inputs):
 
     aws_access_key_id = os.environ["AWS_ACCESS_KEY_ID"]
     aws_secret_access_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-    key = inputs["key"]
+    jwt_shared_secret = os.environ["JWT_SHARED_SECRET"]
+
+    try:
+        jwt_token = inputs["jwt"]
+        decoded_jwt = jwt.decode(jwt_token, jwt_shared_secret, algorithms=["HS256"])
+        key = decoded_jwt["key"]
+    except KeyError:
+        return {"error": "JWT not provided"}
+    except jwt.PyJWTError as e:
+        return {"error": f"Invalid JWT: {e}"}
 
     s3 = boto3.client(
         "s3",
