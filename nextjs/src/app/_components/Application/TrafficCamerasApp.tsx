@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Map from "~/app/_components/Map/Map";
+import MapView from "~/app/_components/Map/Map";
 import useGetSocrataData from "~/app/_hooks/useSocrataData";
 import type { SocrataData } from "~/app/_hooks/useSocrataData"
 
@@ -17,6 +17,6 @@ export default function CameraGeoreferenceApp() {
 
 
     return (
-        <Map socrataData={storedData ?? []} />
+        <MapView socrataData={storedData ?? []} />
     )
 }

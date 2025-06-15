@@ -1,54 +1,48 @@
 "use client";
-import { GoogleMap, useJsApiLoader } from "@react-google-maps/api"
-import type { SocrataData } from "~/app/_hooks/useSocrataData"
-import CameraLocationMarker from "./CameraLocationMarker";
-import { useCallback, useState } from "react";
+import {
+  APIProvider,
+  Map,
+  type MapCameraChangedEvent,
+} from "@vis.gl/react-google-maps";
+import type { SocrataData } from "~/app/_hooks/useSocrataData";
+import CameraLocationMarkers from "./CameraLocationMarkers";
+import { useState } from "react";
 
 const containerStyle = {
   width: "100vw",
   height: "100vh",
+};
+
+interface MapViewProps {
+  socrataData: SocrataData[];
 }
 
-interface MapProps {
-    socrataData: SocrataData[]
-}
-
-function Map({ socrataData }: MapProps) {
-  const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY ?? "",
-  })
-
-  const [map, setMap] = useState<google.maps.Map | null>(null);
+function MapView({ socrataData }: MapViewProps) {
   const [zoom, setZoom] = useState(17);
 
-  const onMapLoad = useCallback((map: google.maps.Map) => {
-    setMap(map);
-  }, []);
+  const handleCameraChange = (ev: MapCameraChangedEvent) =>
+    setZoom(ev.detail.zoom);
 
-  const handleZoomChanged = () => {
-    if (map) {
-      const newZoom = map.getZoom();
-      if (newZoom) {
-        setZoom(newZoom);
-      }
-    }
-  }
+  const position = { lat: 30.262531, lng: -97.753983 };
 
-  return isLoaded ? (
-    <GoogleMap
-      mapContainerStyle={containerStyle}
-      zoom={zoom}
-      center={new google.maps.LatLng(30.262531, -97.753983)}
-      options={{ tilt: 0, mapTypeId: "satellite" }}
-      onLoad={onMapLoad}
-      onZoomChanged={handleZoomChanged}
-      >
-        <CameraLocationMarker socrataData={socrataData} zoom={zoom} />
-    </GoogleMap>
-  ) : (
-    <></>
-  )
+  return (
+    <APIProvider
+      apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY ?? ""}
+    >
+      <div style={containerStyle}>
+        <Map
+          defaultZoom={zoom}
+          defaultCenter={position}
+          tilt={0}
+          mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID ?? "Traffic-Cameras"}
+          mapTypeId="satellite"
+          onCameraChanged={handleCameraChange}
+        >
+          <CameraLocationMarkers socrataData={socrataData} zoom={zoom} />
+        </Map>
+      </div>
+    </APIProvider>
+  );
 }
 
-export default Map;
+export default MapView;
