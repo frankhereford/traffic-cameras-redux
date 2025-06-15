@@ -2,6 +2,8 @@ import type { SocrataData } from "~/app/_hooks/useSocrataData"
 import { AdvancedMarker } from "@vis.gl/react-google-maps"
 import { useMemo } from "react"
 
+import { api } from "~/trpc/react";
+
 
 interface CameraLocationMarkerProps {
   socrataData: SocrataData[]
@@ -24,6 +26,12 @@ export default function CameraLocationMarkers({
   const { scale, color } = useMemo(() => getMarkerAttributes(zoom), [zoom])
   const backgroundColor = useColor ? color : "blue"
 
+  const getJwtMutation = api.camera.getJwt.useMutation({
+    onSuccess: (data) => {
+      console.log(data);
+    },
+  });
+
   return (
     <>
       {socrataData.map((data) => {
@@ -33,7 +41,13 @@ export default function CameraLocationMarkers({
             lng: data.location.coordinates[0]!,
           }
           return (
-            <AdvancedMarker key={data.camera_id} position={position}>
+            <AdvancedMarker
+              key={data.camera_id}
+              position={position}
+              onClick={() => {
+                getJwtMutation.mutate({ cameraId: parseInt(data.camera_id) });
+              }}
+            >
               <div
                 style={{
                   width: `${scale}px`,
