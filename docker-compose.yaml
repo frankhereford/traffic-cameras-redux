@@ -49,7 +49,10 @@ services:
       - redis
 
   detector:
-    build: detector
+    build:
+      context: detector
+      args:
+        - BEAM_TOKEN
     platform: linux/amd64
     volumes:
       - ~/.aws-lambda-rie:/aws-lambda
