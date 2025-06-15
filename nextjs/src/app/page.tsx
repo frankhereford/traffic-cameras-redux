@@ -5,7 +5,7 @@ import Link from "next/link";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
-import CameraGeoreferenceApp from "~/app/_components/TrafficCamerasApp";
+import CameraGeoreferenceApp from "~/app/_components/Application/TrafficCamerasApp";
 
 export default async function Home() {
   // const hello = await api.post.hello({ text: "from tRPC" });

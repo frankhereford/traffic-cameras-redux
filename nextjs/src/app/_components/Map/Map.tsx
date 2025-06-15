@@ -1,7 +1,7 @@
 "use client";
-import { useEffect } from "react";
-import { GoogleMap, useJsApiLoader, OverlayView } from "@react-google-maps/api"
+import { GoogleMap, useJsApiLoader } from "@react-google-maps/api"
 import type { SocrataData } from "~/app/_hooks/useSocrataData"
+import CameraLocationMarker from "./CameraLocationMarker";
 
 const containerStyle = {
   width: "100vw",
@@ -13,11 +13,6 @@ interface MapProps {
 }
 
 function Map({ socrataData }: MapProps) {
-
-  useEffect(() => {
-    console.log("socrataData", socrataData);
-  }, [socrataData]);
-
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY ?? "",
@@ -30,6 +25,7 @@ function Map({ socrataData }: MapProps) {
       center={new google.maps.LatLng(30.262531, -97.753983)}
       options={{ tilt: 0, mapTypeId: "satellite" }}
       >
+        <CameraLocationMarker socrataData={socrataData} />
     </GoogleMap>
   ) : (
     <></>
