@@ -68,10 +68,35 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Specify the internal port of the lambda rie container
       RIE_ENDPOINT: "http://proxy:8080/2015-03-31/functions/function/invocations"
     depends_on:
       - proxy
+
+  nextjs:
+    build:
+      context: ./nextjs
+    volumes:
+      - ./nextjs:/app
+    ports:
+      - 3000:3000
+      #- 5555:5555
+    depends_on:
+      - postgis
+
+  haproxy:
+    image: haproxy:latest
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+      - ./haproxy/ssl:/usr/local/etc/haproxy/ssl:ro
+    ports:
+      - 80:80
+      - 443:443
+      #- 3000:3000
+    depends_on:
+      - nextjs
+      # - flask
+      # - postgrest
+      # - swagger
 
 volumes:
   db_data:
