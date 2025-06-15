@@ -39,7 +39,8 @@ build_and_push_proxy() {
   docker buildx build --platform linux/amd64 --provenance=false -t "${LAMBDA_NAME}:latest" proxy
   docker tag "${LAMBDA_NAME}:latest" "${ECR_REGISTRY}/${LAMBDA_NAME}:latest"
   docker push "${ECR_REGISTRY}/${LAMBDA_NAME}:latest"
-  aws lambda update-function-code --function-name "${LAMBDA_NAME}" --image-uri "${ECR_REGISTRY}/${LAMBDA_NAME}:latest" --publish
+  NEW_VERSION=$(aws lambda update-function-code --function-name "${LAMBDA_NAME}" --image-uri "${ECR_REGISTRY}/${LAMBDA_NAME}:latest" --publish --query 'Version' --output text)
+  cleanup_old_versions "${LAMBDA_NAME}" "${NEW_VERSION}"
 }
 
 # Function to build and push detector
@@ -49,7 +50,27 @@ build_and_push_detector() {
   docker buildx build --platform linux/amd64 --provenance=false -t "${LAMBDA_NAME}:latest" detector
   docker tag "${LAMBDA_NAME}:latest" "${ECR_REGISTRY}/${LAMBDA_NAME}:latest"
   docker push "${ECR_REGISTRY}/${LAMBDA_NAME}:latest"
-  aws lambda update-function-code --function-name "${LAMBDA_NAME}" --image-uri "${ECR_REGISTRY}/${LAMBDA_NAME}:latest" --publish
+  NEW_VERSION=$(aws lambda update-function-code --function-name "${LAMBDA_NAME}" --image-uri "${ECR_REGISTRY}/${LAMBDA_NAME}:latest" --publish --query 'Version' --output text)
+  cleanup_old_versions "${LAMBDA_NAME}" "${NEW_VERSION}"
+}
+
+# Function to clean up old lambda versions
+cleanup_old_versions() {
+  LAMBDA_NAME=$1
+  VERSION_TO_KEEP=$2
+  echo "Cleaning up old versions for $LAMBDA_NAME, keeping version $VERSION_TO_KEEP"
+  
+  OLD_VERSIONS=$(aws lambda list-versions-by-function --function-name "$LAMBDA_NAME" --query "Versions[?!contains(['\$LATEST', '$VERSION_TO_KEEP'], Version)].Version" --output text)
+
+  if [ -n "$OLD_VERSIONS" ]; then
+    for version in $OLD_VERSIONS; do
+      echo "Deleting old version $version of $LAMBDA_NAME..."
+      aws lambda delete-function --function-name "$LAMBDA_NAME" --qualifier "$version"
+    done
+    echo "Cleanup of old versions for $LAMBDA_NAME complete."
+  else
+    echo "No old versions to delete for $LAMBDA_NAME."
+  fi
 }
 
 usage() {
