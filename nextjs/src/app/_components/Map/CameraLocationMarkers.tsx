@@ -39,7 +39,7 @@ export default function CameraLocationMarkers({
                   width: `${scale}px`,
                   height: `${scale}px`,
                   backgroundColor,
-                  border: "1.5px solid black",
+                  border: "1.5px solid #442222",
                   borderRadius: "50%",
                 }}
               />
