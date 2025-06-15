@@ -68,7 +68,6 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Specify the internal port of the lambda rie container
       RIE_ENDPOINT: "http://proxy:8080/2015-03-31/functions/function/invocations"
     depends_on:
       - proxy
