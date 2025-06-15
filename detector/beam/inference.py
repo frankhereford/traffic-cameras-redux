@@ -4,7 +4,6 @@ import os
 from beam import Image, endpoint, env, Volume
 import subprocess
 import boto3
-import hashlib
 import tempfile
 import logging
 from PIL import Image as PILImage
@@ -89,14 +88,6 @@ def object_detection_endpoint(context, **inputs):
         s3.download_file(bucket_name, key, tmp_file.name)
         image_path = tmp_file.name
 
-        sha256_hash = hashlib.sha256()
-        with open(image_path, "rb") as f:
-            # Read and update hash in chunks of 4K
-            for byte_block in iter(lambda: f.read(4096), b""):
-                sha256_hash.update(byte_block)
-
-        hex_digest = sha256_hash.hexdigest()
-
         image = PILImage.open(image_path)
 
         # Process the image for object detection
@@ -137,7 +128,6 @@ def object_detection_endpoint(context, **inputs):
             )
 
     return {
-        "sha256": hex_digest[:16],
         "detections": detections,
         "torch_cuda_available": device == "cuda",
     }
