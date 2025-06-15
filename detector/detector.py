@@ -1,4 +1,8 @@
 import json
+import os
+import jwt
+import requests
+
 
 def handler(event, context):
     """
@@ -10,9 +14,38 @@ def handler(event, context):
         Dict compatible with Lambda Function URL / API Gateway
     """
     # print("Received event: " + json.dumps(event, indent=2)) # keep this comment
-    message = event["Records"][0]["s3"]["object"]["key"]
-    print("Received event: " + message)
+
+    key = event["Records"][0]["s3"]["object"]["key"]
+    print(f"Received key: {key}")
+
+    jwt_shared_secret = os.environ["JWT_SHARED_SECRET"]
+    payload = {"key": key}
+    encoded_jwt = jwt.encode(payload, jwt_shared_secret, algorithm="HS256")
+
+    url = os.environ["DETECTOR_BEAM_LAMBDA"]
+    beam_token = os.environ.get("BEAM_TOKEN")
+
+    headers = {
+        "Content-Type": "application/json",
+    }
+
+    if beam_token:
+        headers["Authorization"] = f"Bearer {beam_token}"
+
+    data = {"jwt": encoded_jwt}
+
+    print(f"Calling endpoint with JWT: {encoded_jwt}")
+
+    response = requests.post(url, headers=headers, json=data)
+
+    print("Received response: " + response.text)
+
     return {
         "statusCode": 200,
-        "body": json.dumps({"message": message}),
-    } 
+        "body": json.dumps(
+            {
+                "message": "Successfully processed event and called endpoint.",
+                "endpoint_response": response.text,
+            }
+        ),
+    }
