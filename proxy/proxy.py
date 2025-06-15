@@ -104,7 +104,7 @@ def handler(event, context):
 
         #print("Received event: " + json.dumps(event, indent=2))
 
-        # Check for JWT in header or query string
+        # Check for JWT in header, query string, or path
         jwt_token = None
         headers = {k.lower(): v for k, v in event.get("headers", {}).items()}
         if "x-camera" in headers:
@@ -113,6 +113,14 @@ def handler(event, context):
         query_params = event.get("queryStringParameters")
         if query_params and "x-camera" in query_params:
             jwt_token = query_params["x-camera"]
+
+        # If no token was found in headers or query string, check the path.
+        if not jwt_token:
+            raw_path = event.get("rawPath", "")
+            # The path would be /<jwt_token>. A simple check for two dots is a
+            # good enough heuristic to see if the path is a JWT.
+            if raw_path and raw_path.count('.') == 2:
+                jwt_token = raw_path.lstrip('/')
 
         if not jwt_token:
             return _serve_fallback_image("No JWT provided")
@@ -288,7 +296,8 @@ def handler(event, context):
             if redis_client and not skip_cache:
                 try:
                     redis_client.setex(cache_key, 60 * 5, image_bytes)
-                    print("Stored image in Redis with TTL=60s")
+                    print("Stored image in Redis with TTL=300s")
+                    
                 except Exception as r_err:
                     print(f"Failed to store image in Redis: {r_err}")
 
