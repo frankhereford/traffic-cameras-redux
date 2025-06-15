@@ -1,2 +1,4 @@
 PyJWT
 requests
+psycopg2-binary
+prisma
