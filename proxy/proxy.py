@@ -289,7 +289,7 @@ def handler(event, context):
             # Store the fresh result in Redis (TTL 60 seconds)
             if redis_client and not skip_cache:
                 try:
-                    redis_client.setex(cache_key, 60 * 60 * 6, image_bytes)
+                    redis_client.setex(cache_key, 60 * 5, image_bytes)
                     print("Stored image in Redis with TTL=60s")
                 except Exception as r_err:
                     print(f"Failed to store image in Redis: {r_err}")
