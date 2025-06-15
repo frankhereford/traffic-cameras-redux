@@ -101,11 +101,13 @@ def object_detection_endpoint(context, **inputs):
 
     bucket_name = "atx-traffic-cameras"
 
+    detections = []
     with tempfile.NamedTemporaryFile() as tmp_file:
         s3.download_file(bucket_name, key, tmp_file.name)
         image_path = tmp_file.name
 
         image = PILImage.open(image_path)
+        width, height = image.size
 
         # Process the image for object detection
         processed_inputs = processor(images=image, return_tensors="pt")
@@ -115,11 +117,10 @@ def object_detection_endpoint(context, **inputs):
         # Convert outputs to COCO API format and filter with threshold
         target_sizes = torch.tensor([image.size[::-1]]).to(device)
         results = processor.post_process_object_detection(
-            outputs, target_sizes=target_sizes, threshold=0.9
+            outputs, target_sizes=target_sizes, threshold=0.6
         )[0]
 
         # Prepare detection results
-        detections = []
         for score, label, box in zip(
             results["scores"], results["labels"], results["boxes"]
         ):
@@ -147,4 +148,6 @@ def object_detection_endpoint(context, **inputs):
     return {
         "detections": detections,
         "torch_cuda_available": device == "cuda",
+        "width": width,
+        "height": height,
     }
