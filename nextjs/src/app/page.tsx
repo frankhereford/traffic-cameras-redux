@@ -5,10 +5,10 @@ import Link from "next/link";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 
-import Map from "./_components/Map/Map";
+import CameraGeoreferenceApp from "~/app/_components/TrafficCamerasApp";
 
 export default async function Home() {
-  const hello = await api.post.hello({ text: "from tRPC" });
+  // const hello = await api.post.hello({ text: "from tRPC" });
   const session = await auth();
 
   if (session?.user) {
@@ -18,7 +18,7 @@ export default async function Home() {
   return (
     <HydrateClient>
       <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <Map />
+        <CameraGeoreferenceApp />
       </main>
     </HydrateClient>
   );
