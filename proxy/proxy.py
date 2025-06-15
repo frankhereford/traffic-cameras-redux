@@ -10,6 +10,12 @@ import io
 import boto3
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": os.environ.get("CORS_VALID_ORIGIN", "*"),
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers": "*",
+}
+
 # Lazily-initialised module-level Redis client.  This allows the same
 # connection to be reused across multiple Lambda invocations that share the
 # execution environment, dramatically reducing cold-start time.
@@ -27,7 +33,11 @@ def _get_redis_client():
         redis_port = int(os.environ.get("REDIS_PORT", 6379))
         redis_password = os.environ.get("REDIS_PASSWORD")
         # The docker-compose file starts Redis with TLS only, so default to TLS
-        use_tls = os.environ.get("REDIS_USE_TLS", "true").lower() in ("1", "true", "yes")
+        use_tls = os.environ.get("REDIS_USE_TLS", "true").lower() in (
+            "1",
+            "true",
+            "yes",
+        )
 
         connection_kwargs = {
             "host": redis_host,
@@ -41,10 +51,12 @@ def _get_redis_client():
             # In local development a self-signed certificate is used. We disable
             # certificate verification here (CERT_NONE). For production you
             # *should* provide a proper CA and set CERT_REQUIRED.
-            connection_kwargs.update({
-                "ssl": True,
-                "ssl_cert_reqs": ssl.CERT_NONE,
-            })
+            connection_kwargs.update(
+                {
+                    "ssl": True,
+                    "ssl_cert_reqs": ssl.CERT_NONE,
+                }
+            )
 
         _redis_client = redis.Redis(**connection_kwargs)
         # Validate the connection – raises if authentication fails
@@ -58,7 +70,7 @@ def _get_redis_client():
     return _redis_client
 
 
-def _serve_fallback_image(reason):
+def _serve_fallback_image(reason, status_code=200):
     """Log the reason and return a response to serve the fallback image."""
     print(f"{reason}. Serving fallback image.")
     try:
@@ -71,8 +83,8 @@ def _serve_fallback_image(reason):
         encoded_image = base64.b64encode(image_bytes).decode("utf-8")
 
         return {
-            "statusCode": 200,
-            "headers": {"Content-Type": "image/jpeg"},
+            "statusCode": status_code,
+            "headers": {"Content-Type": "image/jpeg", **CORS_HEADERS},
             "isBase64Encoded": True,
             "body": encoded_image,
         }
@@ -80,6 +92,7 @@ def _serve_fallback_image(reason):
         print("Fallback image 'nonono.jpg' not found.")
         return {
             "statusCode": 500,
+            "headers": {"Content-Type": "application/json", **CORS_HEADERS},
             "body": json.dumps({"error": "Fallback image not found"}),
         }
 
@@ -93,23 +106,32 @@ def handler(event, context):
     Returns:
         Dict compatible with Lambda Function URL / API Gateway
     """
+    # Handle CORS preflight requests
+    if event.get("requestContext", {}).get("http", {}).get("method") == "OPTIONS":
+        return {
+            "statusCode": 204,
+            "headers": CORS_HEADERS,
+            "body": "",
+        }
+
     try:
         # Return 404 for favicon requests early to avoid further processing.
         if event.get("rawPath") == "/favicon.ico":
             print("Favicon request suppressed.")
             return {
                 "statusCode": 404,
+                "headers": {"Content-Type": "application/json", **CORS_HEADERS},
                 "body": json.dumps({"error": "Not Found"}),
             }
 
-        #print("Received event: " + json.dumps(event, indent=2))
+        # print("Received event: " + json.dumps(event, indent=2))
 
         # Check for JWT in header, query string, or path
         jwt_token = None
         headers = {k.lower(): v for k, v in event.get("headers", {}).items()}
         if "x-camera" in headers:
             jwt_token = headers["x-camera"]
-        
+
         query_params = event.get("queryStringParameters")
         if query_params and "x-camera" in query_params:
             jwt_token = query_params["x-camera"]
@@ -119,8 +141,8 @@ def handler(event, context):
             raw_path = event.get("rawPath", "")
             # The path would be /<jwt_token>. A simple check for two dots is a
             # good enough heuristic to see if the path is a JWT.
-            if raw_path and raw_path.count('.') == 2:
-                jwt_token = raw_path.lstrip('/')
+            if raw_path and raw_path.count(".") == 2:
+                jwt_token = raw_path.lstrip("/")
 
         if not jwt_token:
             return _serve_fallback_image("No JWT provided")
@@ -129,15 +151,15 @@ def handler(event, context):
             # Decode the JWT, verifying the signature
             jwt_secret = os.environ.get("JWT_SHARED_SECRET")
             if jwt_secret:
-                decoded_token = jwt.decode(
-                    jwt_token,
-                    jwt_secret,
-                    algorithms=["HS256"]
+                decoded_token = jwt.decode(jwt_token, jwt_secret, algorithms=["HS256"])
+                print(
+                    "Decoded and verified JWT: " + json.dumps(decoded_token, indent=2)
                 )
-                print("Decoded and verified JWT: " + json.dumps(decoded_token, indent=2))
             else:
                 # JWT_SECRET not configured. Log the attempted token payload and reject.
-                print("Warning: JWT_SHARED_SECRET is not configured. Rejecting request.")
+                print(
+                    "Warning: JWT_SHARED_SECRET is not configured. Rejecting request."
+                )
                 try:
                     unverified_payload = jwt.decode(
                         jwt_token, options={"verify_signature": False}
@@ -164,7 +186,9 @@ def handler(event, context):
             if isinstance(e, jwt.InvalidTokenError):
                 reason = f"Invalid JWT: {e}"
             else:
-                reason = "JWT decoded, but missing 'coaCamera' claim or not a dictionary"
+                reason = (
+                    "JWT decoded, but missing 'coaCamera' claim or not a dictionary"
+                )
             return _serve_fallback_image(reason)
 
         cache_key = f"camera:{camera_id}"
@@ -197,6 +221,16 @@ def handler(event, context):
                 hash_prefix = sha256_hash[:8]
                 print(f"Image SHA256: {sha256_hash}, using prefix: {hash_prefix}")
 
+                # Check if the image is the "Image Unavailable" placeholder
+                unavailable_image_hash = os.environ.get("UNAVAILABLE_IMAGE_HASH")
+                if unavailable_image_hash and sha256_hash == unavailable_image_hash:
+                    print(f"Camera {camera_id} is unavailable by hash match.")
+                    # Don't cache or S3-upload this image. We can just stop,
+                    # but serving the fallback is friendlier to the client.
+                    return _serve_fallback_image(
+                        f"Camera {camera_id} is unavailable.", status_code=503
+                    )
+
                 try:
                     s3_bucket = os.environ.get("S3_BUCKET_NAME", "atx-traffic-cameras")
                     s3_key = f"cameras/{camera_id}/{sha256_hash}.jpg"
@@ -208,7 +242,9 @@ def handler(event, context):
 
                     try:
                         s3.head_object(Bucket=s3_bucket, Key=s3_key)
-                        print(f"File already exists in S3: s3://{s3_bucket}/{s3_key}, skipping upload.")
+                        print(
+                            f"File already exists in S3: s3://{s3_bucket}/{s3_key}, skipping upload."
+                        )
                     except s3.exceptions.ClientError as e:
                         if e.response["Error"]["Code"] == "404":
                             print(f"Uploading image to S3: s3://{s3_bucket}/{s3_key}")
@@ -249,14 +285,16 @@ def handler(event, context):
                         break
                     except IOError:
                         continue
-                
+
                 if not font:
                     print("Could not load a truetype font, falling back to default.")
                     try:
                         # Pillow >= 9.5.0 supports the size argument
                         font = ImageFont.load_default(size=font_size)
                     except AttributeError:
-                        print("Warning: Pillow version may not support 'size' for load_default(). Using default size.")
+                        print(
+                            "Warning: Pillow version may not support 'size' for load_default(). Using default size."
+                        )
                         font = ImageFont.load_default()
 
                 draw = ImageDraw.Draw(img)
@@ -265,12 +303,11 @@ def handler(event, context):
                 text_bbox = draw.textbbox((0, 0), hash_prefix, font=font)
                 text_width = text_bbox[2] - text_bbox[0]
 
-
                 x = img.width - text_width - margin
                 y = margin
 
                 # Create a blurred black shadow
-                shadow_layer = Image.new('RGBA', img.size, (0, 0, 0, 0))
+                shadow_layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
                 shadow_draw = ImageDraw.Draw(shadow_layer)
                 shadow_draw.text((x, y), hash_prefix, font=font, fill="black")
                 shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(radius=5))
@@ -297,7 +334,7 @@ def handler(event, context):
                 try:
                     redis_client.setex(cache_key, 60 * 5, image_bytes)
                     print("Stored image in Redis with TTL=300s")
-                    
+
                 except Exception as r_err:
                     print(f"Failed to store image in Redis: {r_err}")
 
@@ -306,7 +343,7 @@ def handler(event, context):
 
         response = {
             "statusCode": 200,
-            "headers": {"Content-Type": "image/jpeg"},
+            "headers": {"Content-Type": "image/jpeg", **CORS_HEADERS},
             "isBase64Encoded": True,
             "body": encoded_image,
         }
@@ -316,6 +353,6 @@ def handler(event, context):
         print(f"Error processing event: {e}")
         return {
             "statusCode": 500,
+            "headers": {"Content-Type": "application/json", **CORS_HEADERS},
             "body": json.dumps({"error": str(e)}),
         }
-
