@@ -1,6 +1,6 @@
 import type { SocrataData } from "~/app/_hooks/useSocrataData"
-import { AdvancedMarker } from "@vis.gl/react-google-maps"
-import { useMemo } from "react"
+import { AdvancedMarker, InfoWindow } from "@vis.gl/react-google-maps"
+import { useEffect, useMemo, useState } from "react"
 
 import { api } from "~/trpc/react";
 import { env } from "~/env";
@@ -27,13 +27,61 @@ export default function CameraLocationMarkers({
   const { scale, color } = useMemo(() => getMarkerAttributes(zoom), [zoom])
   const backgroundColor = useColor ? color : "blue"
 
+  const [selectedCamera, setSelectedCamera] = useState<SocrataData | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (imageUrl) {
+        URL.revokeObjectURL(imageUrl);
+      }
+    };
+  }, [imageUrl]);
+
+
   const getJwtMutation = api.camera.getJwt.useMutation({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       const url = new URL(env.NEXT_PUBLIC_LAMBDA_URL_PROXY);
       url.pathname = data;
-      window.open(url, "_blank");
+      try {
+        const response = await fetch(url.toString());
+        if (response.status === 503 || !response.ok) {
+          console.log("Camera is unavailable");
+          handleInfoWindowClose();
+          return;
+        }
+        const blob = await response.blob();
+        setImageUrl(URL.createObjectURL(blob));
+      } catch (error) {
+        handleInfoWindowClose();
+      } finally {
+        setIsLoadingImage(false);
+      }
     },
+    onError: () => {
+        setIsLoadingImage(false);
+        setSelectedCamera(null);
+    }
   });
+
+  const handleMarkerClick = (camera: SocrataData) => {
+    if (selectedCamera?.camera_id === camera.camera_id) {
+      setSelectedCamera(null);
+      setImageUrl(null);
+      return;
+    }
+    
+    setSelectedCamera(camera);
+    setImageUrl(null);
+    setIsLoadingImage(true);
+    getJwtMutation.mutate({ cameraId: parseInt(camera.camera_id) });
+  };
+
+  const handleInfoWindowClose = () => {
+    setSelectedCamera(null);
+    setImageUrl(null);
+  };
 
   return (
     <>
@@ -47,9 +95,7 @@ export default function CameraLocationMarkers({
             <AdvancedMarker
               key={data.camera_id}
               position={position}
-              onClick={() => {
-                getJwtMutation.mutate({ cameraId: parseInt(data.camera_id) });
-              }}
+              onClick={() => handleMarkerClick(data)}
             >
               <div
                 style={{
@@ -65,6 +111,27 @@ export default function CameraLocationMarkers({
         }
         return null
       })}
+      {selectedCamera && (
+        <InfoWindow
+          position={{
+            lat: selectedCamera.location.coordinates[1]!,
+            lng: selectedCamera.location.coordinates[0]!,
+          }}
+          onCloseClick={handleInfoWindowClose}
+        >
+          {isLoadingImage ? (
+            <div>Loading image...</div>
+          ) : imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={`Camera ${selectedCamera.camera_id}`}
+              style={{ maxWidth: "300px", maxHeight: "300px" }}
+            />
+          ) : (
+            <div>Image not available</div>
+          )}
+        </InfoWindow>
+      )}
     </>
   )
 }
