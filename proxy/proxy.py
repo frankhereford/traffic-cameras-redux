@@ -10,6 +10,12 @@ import io
 import boto3
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": os.environ.get("CORS_VALID_ORIGIN", "*"),
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers": "*",
+}
+
 # Lazily-initialised module-level Redis client.  This allows the same
 # connection to be reused across multiple Lambda invocations that share the
 # execution environment, dramatically reducing cold-start time.
@@ -78,7 +84,7 @@ def _serve_fallback_image(reason, status_code=200):
 
         return {
             "statusCode": status_code,
-            "headers": {"Content-Type": "image/jpeg"},
+            "headers": {"Content-Type": "image/jpeg", **CORS_HEADERS},
             "isBase64Encoded": True,
             "body": encoded_image,
         }
@@ -86,6 +92,7 @@ def _serve_fallback_image(reason, status_code=200):
         print("Fallback image 'nonono.jpg' not found.")
         return {
             "statusCode": 500,
+            "headers": {"Content-Type": "application/json", **CORS_HEADERS},
             "body": json.dumps({"error": "Fallback image not found"}),
         }
 
@@ -99,12 +106,21 @@ def handler(event, context):
     Returns:
         Dict compatible with Lambda Function URL / API Gateway
     """
+    # Handle CORS preflight requests
+    if event.get("requestContext", {}).get("http", {}).get("method") == "OPTIONS":
+        return {
+            "statusCode": 204,
+            "headers": CORS_HEADERS,
+            "body": "",
+        }
+
     try:
         # Return 404 for favicon requests early to avoid further processing.
         if event.get("rawPath") == "/favicon.ico":
             print("Favicon request suppressed.")
             return {
                 "statusCode": 404,
+                "headers": {"Content-Type": "application/json", **CORS_HEADERS},
                 "body": json.dumps({"error": "Not Found"}),
             }
 
@@ -327,7 +343,7 @@ def handler(event, context):
 
         response = {
             "statusCode": 200,
-            "headers": {"Content-Type": "image/jpeg"},
+            "headers": {"Content-Type": "image/jpeg", **CORS_HEADERS},
             "isBase64Encoded": True,
             "body": encoded_image,
         }
@@ -337,5 +353,6 @@ def handler(event, context):
         print(f"Error processing event: {e}")
         return {
             "statusCode": 500,
+            "headers": {"Content-Type": "application/json", **CORS_HEADERS},
             "body": json.dumps({"error": str(e)}),
         }
