@@ -5,6 +5,8 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+  allowedDevOrigins: ["umop-episdn.org"],
+};
 
 export default config;
