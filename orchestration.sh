@@ -42,11 +42,22 @@ build_and_push_proxy() {
   aws lambda update-function-code --function-name "${LAMBDA_NAME}" --image-uri "${ECR_REGISTRY}/${LAMBDA_NAME}:latest" --publish
 }
 
+# Function to build and push detector
+build_and_push_detector() {
+  echo "Building and pushing detector..."
+  LAMBDA_NAME="camera-image-detector"
+  docker buildx build --platform linux/amd64 --provenance=false -t "${LAMBDA_NAME}:latest" detector
+  docker tag "${LAMBDA_NAME}:latest" "${ECR_REGISTRY}/${LAMBDA_NAME}:latest"
+  docker push "${ECR_REGISTRY}/${LAMBDA_NAME}:latest"
+  aws lambda update-function-code --function-name "${LAMBDA_NAME}" --image-uri "${ECR_REGISTRY}/${LAMBDA_NAME}:latest" --publish
+}
+
 usage() {
   echo "Usage: $0 [options]"
   echo "Options:"
   echo "  -l, --login    Log in to AWS ECR"
   echo "  -p, --proxy    Build and push the camera-image-proxy"
+  echo "  -d, --detector Build and push the detector"
   echo "  -h, --help     Display this help and exit"
 }
 
@@ -54,7 +65,7 @@ usage() {
 # The -o option string specifies short options. A colon after an option indicates it requires an argument.
 # The -l option string specifies long options.
 # The -- separates the options from the arguments.
-TEMP=$(getopt -o lph --long login,proxy,help -n 'orchestration.sh' -- "$@")
+TEMP=$(getopt -o lpdh --long login,proxy,detector,help -n 'orchestration.sh' -- "$@")
 if [ $? != 0 ]; then
     usage
     exit 1
@@ -65,6 +76,7 @@ eval set -- "$TEMP"
 
 DO_LOGIN=false
 DO_PROXY=false
+DO_DETECTOR=false
 
 while true; do
   case "$1" in
@@ -74,6 +86,10 @@ while true; do
       ;;
     -p | --proxy)
       DO_PROXY=true
+      shift
+      ;;
+    -d | --detector)
+      DO_DETECTOR=true
       shift
       ;;
     -h | --help)
@@ -91,17 +107,26 @@ while true; do
   esac
 done
 
-if [ "$DO_LOGIN" = false ] && [ "$DO_PROXY" = false ]; then
+if [ "$DO_LOGIN" = false ] && [ "$DO_PROXY" = false ] && [ "$DO_DETECTOR" = false ]; then
     usage
     exit 1
 fi
 
-if [ "$DO_PROXY" = true ]; then
+if [ "$DO_PROXY" = true ] || [ "$DO_DETECTOR" = true ]; then
   if ! check_login; then
     login
   fi
+fi
+
+if [ "$DO_PROXY" = true ]; then
   build_and_push_proxy
-elif [ "$DO_LOGIN" = true ]; then
+fi
+
+if [ "$DO_DETECTOR" = true ]; then
+  build_and_push_detector
+fi
+
+if [ "$DO_LOGIN" = true ] && [ "$DO_PROXY" = false ] && [ "$DO_DETECTOR" = false ]; then
     if ! check_login; then
         login
     fi
