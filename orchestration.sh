@@ -47,7 +47,7 @@ build_and_push_proxy() {
 build_and_push_detector() {
   echo "Building and pushing detector..."
   LAMBDA_NAME="camera-image-detector"
-  docker buildx build --platform linux/amd64 --provenance=false -t "${LAMBDA_NAME}:latest" detector
+  docker buildx build --platform linux/amd64 --provenance=false --build-arg BEAM_TOKEN -t "${LAMBDA_NAME}:latest" detector
   docker tag "${LAMBDA_NAME}:latest" "${ECR_REGISTRY}/${LAMBDA_NAME}:latest"
   docker push "${ECR_REGISTRY}/${LAMBDA_NAME}:latest"
   NEW_VERSION=$(aws lambda update-function-code --function-name "${LAMBDA_NAME}" --image-uri "${ECR_REGISTRY}/${LAMBDA_NAME}:latest" --publish --query 'Version' --output text)
