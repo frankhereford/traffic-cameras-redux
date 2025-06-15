@@ -3,6 +3,7 @@ import { AdvancedMarker } from "@vis.gl/react-google-maps"
 import { useMemo } from "react"
 
 import { api } from "~/trpc/react";
+import { env } from "~/env";
 
 
 interface CameraLocationMarkerProps {
@@ -28,7 +29,9 @@ export default function CameraLocationMarkers({
 
   const getJwtMutation = api.camera.getJwt.useMutation({
     onSuccess: (data) => {
-      console.log(data);
+      const url = new URL(env.NEXT_PUBLIC_LAMBDA_URL_PROXY);
+      url.pathname = data;
+      window.open(url, "_blank");
     },
   });
 

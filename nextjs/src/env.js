@@ -28,6 +28,7 @@ export const env = createEnv({
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
     NEXT_PUBLIC_GOOGLE_MAP_API_KEY: z.string(),
+    NEXT_PUBLIC_LAMBDA_URL_PROXY: z.string().url(),
   },
 
   /**
@@ -40,6 +41,7 @@ export const env = createEnv({
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
     JWT_SHARED_SECRET: process.env.JWT_SHARED_SECRET,
     NEXT_PUBLIC_GOOGLE_MAP_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY,
+    NEXT_PUBLIC_LAMBDA_URL_PROXY: process.env.NEXT_PUBLIC_LAMBDA_URL_PROXY,
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
   },
