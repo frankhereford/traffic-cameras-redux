@@ -40,7 +40,7 @@ def download_models():
 
 @endpoint(
     cpu=1.0,
-    memory=128,
+    memory=8,
     gpu="T4",
     on_start=download_models,
     secrets=["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
@@ -61,7 +61,7 @@ def nvidia_smi_endpoint(**inputs):
 
 @endpoint(
     cpu=1.0,
-    memory=128,
+    memory=8,
     gpu="T4",
     on_start=download_models,
     volumes=[Volume(name="weights", mount_path=BEAM_VOLUME_CACHE_PATH)],

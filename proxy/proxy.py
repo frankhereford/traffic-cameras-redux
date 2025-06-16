@@ -53,9 +53,6 @@ def _get_redis_client():
         }
 
         if use_tls:
-            # In local development a self-signed certificate is used. We disable
-            # certificate verification here (CERT_NONE). For production you
-            # *should* provide a proper CA and set CERT_REQUIRED.
             connection_kwargs.update(
                 {
                     "ssl": True,
@@ -79,7 +76,6 @@ def _serve_fallback_image(reason, status_code=200):
     """Log the reason and return a response to serve the fallback image."""
     print(f"{reason}. Serving fallback image.")
     try:
-        # Look for nonono.jpg in the same directory as this script
         script_dir = os.path.dirname(__file__)
         fallback_path = os.path.join(script_dir, "nonono.jpg")
         with open(fallback_path, "rb") as f:
@@ -230,8 +226,6 @@ def handler(event, context):
                 unavailable_image_hash = os.environ.get("UNAVAILABLE_IMAGE_HASH")
                 if unavailable_image_hash and sha256_hash == unavailable_image_hash:
                     print(f"Camera {camera_id} is unavailable by hash match.")
-                    # Don't cache or S3-upload this image. We can just stop,
-                    # but serving the fallback is friendlier to the client.
                     return _serve_fallback_image(
                         f"Camera {camera_id} is unavailable.", status_code=503
                     )
