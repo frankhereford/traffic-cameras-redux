@@ -215,6 +215,7 @@ def handler(event, context):
                 print("Cache miss – downloading image from source")
                 image_url = f"https://cctv.austinmobility.io/image/{camera_id}.jpg"
                 with urllib.request.urlopen(image_url) as img_response:
+                    response_code = img_response.getcode()
                     original_image_bytes = img_response.read()
 
                 try:
@@ -223,9 +224,43 @@ def handler(event, context):
                     hash_prefix = sha256_hash[:8]
                     print(f"Image SHA256: {sha256_hash}, using prefix: {hash_prefix}")
 
-                    # Check if the image is the "Image Unavailable" placeholder
                     unavailable_image_hash = os.environ.get("UNAVAILABLE_IMAGE_HASH")
-                    if unavailable_image_hash and sha256_hash == unavailable_image_hash:
+
+                    # Set status based on response code and image hash
+                    status = (
+                        "unavailable"
+                        if (
+                            response_code == 200
+                            and sha256_hash == unavailable_image_hash
+                        )
+                        else str(response_code)
+                    )
+
+                    print(f"Status for camera {camera_id}: {status}")
+
+                    status_record = transaction.status.upsert(
+                        where={"name": status},
+                        data={"create": {"name": status}, "update": {}},
+                    )
+                    camera_record = transaction.camera.upsert(
+                        where={"coaId": int(camera_id)},
+                        data={
+                            "create": {
+                                "coaId": int(camera_id),
+                                "statusId": status_record.id,
+                            },
+                            "update": {"statusId": status_record.id},
+                        },
+                    )
+
+                    camera_status_record = transaction.camerastatus.create(
+                        data={
+                            "cameraId": camera_record.id,
+                            "statusId": status_record.id,
+                        }
+                    )
+
+                    if status == "unavailable":
                         print(f"Camera {camera_id} is unavailable by hash match.")
                         return _serve_fallback_image(
                             f"Camera {camera_id} is unavailable.", status_code=503
