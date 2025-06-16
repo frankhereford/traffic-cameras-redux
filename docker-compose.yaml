@@ -69,6 +69,7 @@ services:
       - "8080:8080"
     environment:
       RIE_ENDPOINT: "http://proxy:8080/2015-03-31/functions/function/invocations"
+      ENABLE_CORS: "true"
     depends_on:
       - proxy
 
