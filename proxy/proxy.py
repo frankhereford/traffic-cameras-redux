@@ -266,6 +266,16 @@ def handler(event, context):
                             f"Camera {camera_id} is unavailable.", status_code=503
                         )
 
+                    image_record = transaction.image.create(
+                        data={
+                            "hash": sha256_hash,
+                            "cameraId": camera_record.id,
+                            "statusId": status_record.id,
+                            "s3Uploaded": False,
+                            "detectionsProcessed": False,
+                        }
+                    )
+
                     try:
                         s3_bucket = os.environ.get(
                             "S3_BUCKET_NAME", "atx-traffic-cameras"
