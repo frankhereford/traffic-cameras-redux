@@ -98,6 +98,17 @@ services:
       # - postgrest
       # - swagger
 
+  #docker compose run --rm psql
+  # psql:
+  #   image: postgis/postgis
+  #   env_file:
+  #     - .env
+  #   command: ["psql", "${DATABASE_URL}"]
+  #   stdin_open: true
+  #   tty: true
+  #   depends_on:
+  #     - postgis
+
 volumes:
   db_data:
   redis_data:
