@@ -346,16 +346,16 @@ def handler(event, context):
                     except Exception as r_err:
                         print(f"Failed to store image in Redis: {r_err}")
 
-            # Encode binary payload as base64 for Lambda response
-            encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+        # Encode binary payload as base64 for Lambda response
+        encoded_image = base64.b64encode(image_bytes).decode("utf-8")
 
-            response = {
-                "statusCode": 200,
-                "headers": {"Content-Type": "image/jpeg", **CORS_HEADERS},
-                "isBase64Encoded": True,
-                "body": encoded_image,
-            }
-            return response
+        response = {
+            "statusCode": 200,
+            "headers": {"Content-Type": "image/jpeg", **CORS_HEADERS},
+            "isBase64Encoded": True,
+            "body": encoded_image,
+        }
+        return response
 
     except Exception as e:
         print(f"Error processing event: {e}")
