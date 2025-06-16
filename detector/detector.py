@@ -2,6 +2,11 @@ import json
 import os
 import jwt
 import requests
+from prisma import Prisma
+
+
+db = Prisma()
+db.connect()
 
 
 def handler(event, context):
