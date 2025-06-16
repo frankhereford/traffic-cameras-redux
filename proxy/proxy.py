@@ -211,142 +211,151 @@ def handler(event, context):
 
         # If not cached, download from the Austin Mobility CCTV feed
         if image_bytes is None:
-            print("Cache miss – downloading image from source")
-            image_url = f"https://cctv.austinmobility.io/image/{camera_id}.jpg"
-            with urllib.request.urlopen(image_url) as img_response:
-                original_image_bytes = img_response.read()
-
-            try:
-                # Calculate SHA256 hash of the original image
-                sha256_hash = hashlib.sha256(original_image_bytes).hexdigest()
-                hash_prefix = sha256_hash[:8]
-                print(f"Image SHA256: {sha256_hash}, using prefix: {hash_prefix}")
-
-                # Check if the image is the "Image Unavailable" placeholder
-                unavailable_image_hash = os.environ.get("UNAVAILABLE_IMAGE_HASH")
-                if unavailable_image_hash and sha256_hash == unavailable_image_hash:
-                    print(f"Camera {camera_id} is unavailable by hash match.")
-                    return _serve_fallback_image(
-                        f"Camera {camera_id} is unavailable.", status_code=503
-                    )
+            with db.tx() as transaction:
+                print("Cache miss – downloading image from source")
+                image_url = f"https://cctv.austinmobility.io/image/{camera_id}.jpg"
+                with urllib.request.urlopen(image_url) as img_response:
+                    original_image_bytes = img_response.read()
 
                 try:
-                    s3_bucket = os.environ.get("S3_BUCKET_NAME", "atx-traffic-cameras")
-                    s3_key = f"cameras/{camera_id}/{sha256_hash}.jpg"
+                    # Calculate SHA256 hash of the original image
+                    sha256_hash = hashlib.sha256(original_image_bytes).hexdigest()
+                    hash_prefix = sha256_hash[:8]
+                    print(f"Image SHA256: {sha256_hash}, using prefix: {hash_prefix}")
 
-                    s3 = boto3.client(
-                        "s3",
-                        region_name=os.environ.get("AWS_REGION", "us-east-1"),
-                    )
+                    # Check if the image is the "Image Unavailable" placeholder
+                    unavailable_image_hash = os.environ.get("UNAVAILABLE_IMAGE_HASH")
+                    if unavailable_image_hash and sha256_hash == unavailable_image_hash:
+                        print(f"Camera {camera_id} is unavailable by hash match.")
+                        return _serve_fallback_image(
+                            f"Camera {camera_id} is unavailable.", status_code=503
+                        )
 
                     try:
-                        s3.head_object(Bucket=s3_bucket, Key=s3_key)
-                        print(
-                            f"File already exists in S3: s3://{s3_bucket}/{s3_key}, skipping upload."
+                        s3_bucket = os.environ.get(
+                            "S3_BUCKET_NAME", "atx-traffic-cameras"
                         )
-                    except s3.exceptions.ClientError as e:
-                        if e.response["Error"]["Code"] == "404":
-                            print(f"Uploading image to S3: s3://{s3_bucket}/{s3_key}")
-                            s3.upload_fileobj(
-                                io.BytesIO(original_image_bytes),
-                                s3_bucket,
-                                s3_key,
-                                ExtraArgs={"ContentType": "image/jpeg"},
+                        s3_key = f"cameras/{camera_id}/{sha256_hash}.jpg"
+
+                        s3 = boto3.client(
+                            "s3",
+                            region_name=os.environ.get("AWS_REGION", "us-east-1"),
+                        )
+
+                        try:
+                            s3.head_object(Bucket=s3_bucket, Key=s3_key)
+                            print(
+                                f"File already exists in S3: s3://{s3_bucket}/{s3_key}, skipping upload."
                             )
-                            print("Successfully uploaded to S3.")
-                        else:
-                            # Log other client errors
-                            print(f"Error checking S3 for {s3_key}: {e}")
-                except Exception as s3_err:
-                    print(f"An error occurred during S3 operation: {s3_err}")
+                        except s3.exceptions.ClientError as e:
+                            if e.response["Error"]["Code"] == "404":
+                                print(
+                                    f"Uploading image to S3: s3://{s3_bucket}/{s3_key}"
+                                )
+                                s3.upload_fileobj(
+                                    io.BytesIO(original_image_bytes),
+                                    s3_bucket,
+                                    s3_key,
+                                    ExtraArgs={"ContentType": "image/jpeg"},
+                                )
+                                print("Successfully uploaded to S3.")
+                            else:
+                                # Log other client errors
+                                print(f"Error checking S3 for {s3_key}: {e}")
+                    except Exception as s3_err:
+                        print(f"An error occurred during S3 operation: {s3_err}")
 
-                img = Image.open(io.BytesIO(original_image_bytes)).convert("RGBA")
+                    img = Image.open(io.BytesIO(original_image_bytes)).convert("RGBA")
 
-                # Define a baseline for scaling UI elements. 1080p is a common standard.
-                base_height = 1080.0
-                scale_factor = img.height / base_height
+                    # Define a baseline for scaling UI elements. 1080p is a common standard.
+                    base_height = 1080.0
+                    scale_factor = img.height / base_height
 
-                # Scale font size and margin based on the image's vertical resolution.
-                # Ensure a minimum size of 1 to avoid errors with tiny images.
-                font_size = max(1, int(32 * scale_factor))
-                margin = max(1, int(10 * scale_factor))
+                    # Scale font size and margin based on the image's vertical resolution.
+                    # Ensure a minimum size of 1 to avoid errors with tiny images.
+                    font_size = max(1, int(32 * scale_factor))
+                    margin = max(1, int(10 * scale_factor))
 
-                # Try to load a suitable fixed-width font
-                font = None
-                # Common paths for fonts in Lambda/Linux environments
-                font_paths = [
-                    "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
-                    "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf",
-                ]
-                for path in font_paths:
-                    try:
-                        font = ImageFont.truetype(path, font_size)
-                        break
-                    except IOError:
-                        continue
+                    # Try to load a suitable fixed-width font
+                    font = None
+                    # Common paths for fonts in Lambda/Linux environments
+                    font_paths = [
+                        "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+                        "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf",
+                    ]
+                    for path in font_paths:
+                        try:
+                            font = ImageFont.truetype(path, font_size)
+                            break
+                        except IOError:
+                            continue
 
-                if not font:
-                    print("Could not load a truetype font, falling back to default.")
-                    try:
-                        # Pillow >= 9.5.0 supports the size argument
-                        font = ImageFont.load_default(size=font_size)
-                    except AttributeError:
+                    if not font:
                         print(
-                            "Warning: Pillow version may not support 'size' for load_default(). Using default size."
+                            "Could not load a truetype font, falling back to default."
                         )
-                        font = ImageFont.load_default()
+                        try:
+                            # Pillow >= 9.5.0 supports the size argument
+                            font = ImageFont.load_default(size=font_size)
+                        except AttributeError:
+                            print(
+                                "Warning: Pillow version may not support 'size' for load_default(). Using default size."
+                            )
+                            font = ImageFont.load_default()
 
-                draw = ImageDraw.Draw(img)
+                    draw = ImageDraw.Draw(img)
 
-                # Position text in the upper right corner
-                text_bbox = draw.textbbox((0, 0), hash_prefix, font=font)
-                text_width = text_bbox[2] - text_bbox[0]
+                    # Position text in the upper right corner
+                    text_bbox = draw.textbbox((0, 0), hash_prefix, font=font)
+                    text_width = text_bbox[2] - text_bbox[0]
 
-                x = img.width - text_width - margin
-                y = margin
+                    x = img.width - text_width - margin
+                    y = margin
 
-                # Create a blurred black shadow
-                shadow_layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
-                shadow_draw = ImageDraw.Draw(shadow_layer)
-                shadow_draw.text((x, y), hash_prefix, font=font, fill="black")
-                shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(radius=5))
+                    # Create a blurred black shadow
+                    shadow_layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
+                    shadow_draw = ImageDraw.Draw(shadow_layer)
+                    shadow_draw.text((x, y), hash_prefix, font=font, fill="black")
+                    shadow_layer = shadow_layer.filter(
+                        ImageFilter.GaussianBlur(radius=5)
+                    )
 
-                # Composite the shadow onto the image
-                img = Image.alpha_composite(img, shadow_layer)
+                    # Composite the shadow onto the image
+                    img = Image.alpha_composite(img, shadow_layer)
 
-                # Draw the white text on top
-                final_draw = ImageDraw.Draw(img)
-                final_draw.text((x, y), hash_prefix, font=font, fill="white")
+                    # Draw the white text on top
+                    final_draw = ImageDraw.Draw(img)
+                    final_draw.text((x, y), hash_prefix, font=font, fill="white")
 
-                # Save the modified image to a buffer
-                buffer = io.BytesIO()
-                img.convert("RGB").save(buffer, format="JPEG")
-                image_bytes = buffer.getvalue()
+                    # Save the modified image to a buffer
+                    buffer = io.BytesIO()
+                    img.convert("RGB").save(buffer, format="JPEG")
+                    image_bytes = buffer.getvalue()
 
-            except Exception as img_err:
-                print(f"Failed to process image and add SHA overlay: {img_err}")
-                # Fall back to using the original, unmodified image
-                image_bytes = original_image_bytes
+                except Exception as img_err:
+                    print(f"Failed to process image and add SHA overlay: {img_err}")
+                    # Fall back to using the original, unmodified image
+                    image_bytes = original_image_bytes
 
-            # Store the fresh result in Redis (TTL 60 seconds)
-            if redis_client and not skip_cache:
-                try:
-                    redis_client.setex(cache_key, 60 * 5, image_bytes)
-                    print("Stored image in Redis with TTL=300s")
+                # Store the fresh result in Redis (TTL 60 seconds)
+                if redis_client and not skip_cache:
+                    try:
+                        redis_client.setex(cache_key, 60 * 5, image_bytes)
+                        print("Stored image in Redis with TTL=300s")
 
-                except Exception as r_err:
-                    print(f"Failed to store image in Redis: {r_err}")
+                    except Exception as r_err:
+                        print(f"Failed to store image in Redis: {r_err}")
 
-        # Encode binary payload as base64 for Lambda response
-        encoded_image = base64.b64encode(image_bytes).decode("utf-8")
+            # Encode binary payload as base64 for Lambda response
+            encoded_image = base64.b64encode(image_bytes).decode("utf-8")
 
-        response = {
-            "statusCode": 200,
-            "headers": {"Content-Type": "image/jpeg", **CORS_HEADERS},
-            "isBase64Encoded": True,
-            "body": encoded_image,
-        }
-        return response
+            response = {
+                "statusCode": 200,
+                "headers": {"Content-Type": "image/jpeg", **CORS_HEADERS},
+                "isBase64Encoded": True,
+                "body": encoded_image,
+            }
+            return response
 
     except Exception as e:
         print(f"Error processing event: {e}")
