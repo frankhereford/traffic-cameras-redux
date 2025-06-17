@@ -10,7 +10,6 @@ type AllCameras = RouterOutputs["camera"]["getAllCameras"];
 interface CameraLocationMarkerProps {
   socrataData: SocrataData[]
   zoom: number
-  allCameras: AllCameras | undefined
 }
 
 const getMarkerAttributes = (zoom: number) => {
@@ -24,8 +23,8 @@ const getMarkerAttributes = (zoom: number) => {
 export default function CameraLocationMarkers({
   socrataData,
   zoom,
-  allCameras,
 }: CameraLocationMarkerProps) {
+  const { data: allCameras } = api.camera.getAllCameras.useQuery();
   const { scale } = useMemo(() => getMarkerAttributes(zoom), [zoom]);
 
   const cameraStatusMap = useMemo(() => {
