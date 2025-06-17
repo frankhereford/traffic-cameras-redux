@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import jwt
 import requests
 from prisma import Prisma
@@ -23,7 +24,18 @@ def handler(event, context):
     key = event["Records"][0]["s3"]["object"]["key"]
     print(f"Received key: {key}")
 
-    image_hash = os.path.basename(key)
+    match = re.search(r"([^/]+)\.jpg$", key)
+    if not match:
+        print(f"Could not extract image hash from key: {key}")
+        return {
+            "statusCode": 400,
+            "body": json.dumps(
+                {"message": f"Could not extract image hash from key: {key}"}
+            ),
+        }
+    image_hash = match.group(1)
+    print(f"Extracted image_hash: {image_hash}")
+
     image = db.image.find_unique(where={"hash": image_hash})
     if not image:
         print(f"Image with hash {image_hash} not found in database.")
