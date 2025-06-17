@@ -2,9 +2,10 @@ import type { SocrataData } from "~/app/_hooks/useSocrataData"
 import { AdvancedMarker, InfoWindow } from "@vis.gl/react-google-maps"
 import { useEffect, useMemo, useState } from "react"
 
-import { api } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 import { env } from "~/env";
 
+type AllCameras = RouterOutputs["camera"]["getAllCameras"];
 
 interface CameraLocationMarkerProps {
   socrataData: SocrataData[]
@@ -12,20 +13,37 @@ interface CameraLocationMarkerProps {
 }
 
 const getMarkerAttributes = (zoom: number) => {
-  if (zoom < 10) return { scale: 8, color: "red" };
-  if (zoom < 12) return { scale: 9, color: "orange" };
-  if (zoom < 15) return { scale: 14, color: "yellow" };
-  if (zoom < 18) return { scale: 18, color: "green" };
-  return { scale: 20, color: "blue" };
+  if (zoom < 10) return { scale: 8 };
+  if (zoom < 12) return { scale: 9 };
+  if (zoom < 15) return { scale: 14 };
+  if (zoom < 18) return { scale: 18 };
+  return { scale: 20 };
 };
 
 export default function CameraLocationMarkers({
   socrataData,
   zoom,
 }: CameraLocationMarkerProps) {
-  const useColor = false;
-  const { scale, color } = useMemo(() => getMarkerAttributes(zoom), [zoom])
-  const backgroundColor = useColor ? color : "blue"
+  const { data: allCameras } = api.camera.getAllCameras.useQuery();
+  const utils = api.useUtils();
+  const { scale } = useMemo(() => getMarkerAttributes(zoom), [zoom]);
+
+  const cameraStatusMap = useMemo(() => {
+    if (!allCameras) return new Map<number, string>();
+    return new Map<number, string>(
+      allCameras.map((camera) => [
+        camera.coaId,
+        camera.status?.name ?? "Unknown",
+      ]),
+    );
+  }, [allCameras]);
+
+  const getStatusColor = (camera_id: string) => {
+    const status = cameraStatusMap.get(parseInt(camera_id, 10));
+    if (!status) return "grey";
+    if (status === "200") return "green";
+    return "red";
+  };
 
   const [selectedCamera, setSelectedCamera] = useState<SocrataData | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -49,12 +67,15 @@ export default function CameraLocationMarkers({
         if (response.status === 503 || !response.ok) {
           console.log("Camera is unavailable");
           handleInfoWindowClose();
+          void utils.camera.getAllCameras.invalidate();
           return;
         }
         const blob = await response.blob();
         setImageUrl(URL.createObjectURL(blob));
+        void utils.camera.getAllCameras.invalidate();
       } catch (error) {
         handleInfoWindowClose();
+        void utils.camera.getAllCameras.invalidate();
       } finally {
         setIsLoadingImage(false);
       }
@@ -62,6 +83,7 @@ export default function CameraLocationMarkers({
     onError: () => {
         setIsLoadingImage(false);
         setSelectedCamera(null);
+        void utils.camera.getAllCameras.invalidate();
     }
   });
 
@@ -101,7 +123,7 @@ export default function CameraLocationMarkers({
                 style={{
                   width: `${scale}px`,
                   height: `${scale}px`,
-                  backgroundColor,
+                  backgroundColor: getStatusColor(data.camera_id),
                   border: "1.5px solid #442222",
                   borderRadius: "50%",
                 }}

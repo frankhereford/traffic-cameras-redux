@@ -38,7 +38,10 @@ function MapView({ socrataData }: MapViewProps) {
           mapTypeId="satellite"
           onCameraChanged={handleCameraChange}
         >
-          <CameraLocationMarkers socrataData={socrataData} zoom={zoom} />
+          <CameraLocationMarkers
+            socrataData={socrataData}
+            zoom={zoom}
+          />
         </Map>
       </div>
     </APIProvider>
