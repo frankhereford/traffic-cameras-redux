@@ -37,7 +37,7 @@ interface OpenInfoWindow {
   isLoading: boolean;
 }
 
-export default function CameraLocationMarkers({
+export default function CameraLocationMarkersInfoBoxes({
   socrataData,
   zoom,
   bounds,
