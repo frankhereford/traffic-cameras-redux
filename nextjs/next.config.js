@@ -13,6 +13,10 @@ const config = {
         protocol: "https",
         hostname: "placehold.co",
       },
+      {
+        protocol: "https",
+        hostname: "aux2ydyw5rlsjw67bialhehdom0tfmmb.lambda-url.us-east-1.on.aws",
+      },
     ],
   },
 };
