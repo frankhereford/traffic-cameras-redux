@@ -185,24 +185,24 @@ export default function CameraLocationMarkers({
     });
   }, [bounds, socrataData, cameraStatusMap, getJwtMutation.mutate]);
 
-  const handleMarkerClick = (camera: SocrataData) => {
-    setOpenInfoWindows(prev => {
-      const newMap = new Map(prev);
-      if (newMap.has(camera.camera_id)) {
-        const entry = newMap.get(camera.camera_id);
-        if (entry?.imageUrl) {
-          URL.revokeObjectURL(entry.imageUrl);
-        }
-        newMap.delete(camera.camera_id);
-      } else {
-        if (newMap.size < MAX_OPEN_INFO_WINDOWS) {
-          newMap.set(camera.camera_id, { camera, imageUrl: null, isLoading: true });
-          getJwtMutation.mutate({ cameraId: parseInt(camera.camera_id) });
-        }
-      }
-      return newMap;
-    });
-  };
+  // const handleMarkerClick = (camera: SocrataData) => {
+  //   setOpenInfoWindows(prev => {
+  //     const newMap = new Map(prev);
+  //     if (newMap.has(camera.camera_id)) {
+  //       const entry = newMap.get(camera.camera_id);
+  //       if (entry?.imageUrl) {
+  //         URL.revokeObjectURL(entry.imageUrl);
+  //       }
+  //       newMap.delete(camera.camera_id);
+  //     } else {
+  //       if (newMap.size < MAX_OPEN_INFO_WINDOWS) {
+  //         newMap.set(camera.camera_id, { camera, imageUrl: null, isLoading: true });
+  //         getJwtMutation.mutate({ cameraId: parseInt(camera.camera_id) });
+  //       }
+  //     }
+  //     return newMap;
+  //   });
+  // };
 
   const handleInfoWindowClose = (cameraId: string) => {
     setOpenInfoWindows(prev => {
@@ -228,7 +228,7 @@ export default function CameraLocationMarkers({
             <AdvancedMarker
               key={data.camera_id}
               position={position}
-              onClick={() => handleMarkerClick(data)}
+              // onClick={() => handleMarkerClick(data)}
             >
               <div
                 style={{
