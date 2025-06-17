@@ -41,7 +41,7 @@ def handler(event, context):
     image_hash = match.group(1)
     print(f"Extracted image_hash: {image_hash}")
 
-    image = db.image.find_unique(where={"hash": image_hash})
+    image = db.image.find_unique(where={"hash": image_hash}, include={"camera": True})
     if not image:
         print(f"Image with hash {image_hash} not found in database.")
         return {
@@ -128,12 +128,24 @@ def handler(event, context):
                 cropped_image = source_image.crop((left, top, right, bottom))
 
                 img_byte_arr = io.BytesIO()
-                cropped_image.save(img_byte_arr, format="JPEG")
-                img_byte_arr = img_byte_arr.getvalue()
+                cropped_image.save(img_byte_arr, format="PNG")
+                img_byte_arr_value = img_byte_arr.getvalue()
 
-                sha256_hash = hashlib.sha256(img_byte_arr).hexdigest()
+                # sha256_hash = hashlib.sha256(img_byte_arr_value).hexdigest()
 
-                print(f"Detection {detection.id}: new image SHA256 is {sha256_hash}")
+                # print(f"Detection {detection.id}: new image SHA256 is {sha256_hash}")
+
+                date_str = image.createdAt.strftime("%Y%m%d-%H%M%S")
+                s3_key = f"detections/{image.camera.coaId}/{date_str}-{image.id}/{detection.label}-{detection.id}.png"
+                s3_client.put_object(
+                    Bucket=bucket,
+                    Key=s3_key,
+                    Body=img_byte_arr_value,
+                    ContentType="image/png",
+                )
+                print(
+                    f"Detection {detection.id}  -> Uploaded to s3://{bucket}/{s3_key}"
+                )
 
         except Exception as e:
             print(f"Error processing image from S3: {e}")
