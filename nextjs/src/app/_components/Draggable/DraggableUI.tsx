@@ -1,9 +1,9 @@
 "use client";
 
-import { Rnd } from "react-rnd";
-import { GlassMorphism } from "liquid-glass-react";
+import CameraImage from "./CameraImage";
 
 export default function DraggableUI() {
+  const imageUrl = "https://placehold.co/320x240/png";
   return (
     <div
       style={{
@@ -15,23 +15,7 @@ export default function DraggableUI() {
         pointerEvents: 'none'
       }}
     >
-      <Rnd
-        style={{
-            pointerEvents: 'auto',
-            display: 'flex',
-            flexDirection: 'column'
-        }}
-        bounds="parent"
-        lockAspectRatio
-        enableResizing={false}
-      >
-        <GlassMorphism tintColor="#Ffffff" tintOpacity={.1} shadowColor="#fff5"
-          shadowBlur={10} shadowSpread={5} borderRadius={20} outerShadowBlur={4} >
-          <div>
-            Camera Image Here
-          </div>
-        </GlassMorphism>
-      </Rnd>
+      <CameraImage imageUrl={imageUrl} />
     </div>
   );
 } 
