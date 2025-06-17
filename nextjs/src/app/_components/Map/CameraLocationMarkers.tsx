@@ -25,6 +25,7 @@ export default function CameraLocationMarkers({
   zoom,
 }: CameraLocationMarkerProps) {
   const { data: allCameras } = api.camera.getAllCameras.useQuery();
+  const utils = api.useUtils();
   const { scale } = useMemo(() => getMarkerAttributes(zoom), [zoom]);
 
   const cameraStatusMap = useMemo(() => {
@@ -66,12 +67,15 @@ export default function CameraLocationMarkers({
         if (response.status === 503 || !response.ok) {
           console.log("Camera is unavailable");
           handleInfoWindowClose();
+          void utils.camera.getAllCameras.invalidate();
           return;
         }
         const blob = await response.blob();
         setImageUrl(URL.createObjectURL(blob));
+        void utils.camera.getAllCameras.invalidate();
       } catch (error) {
         handleInfoWindowClose();
+        void utils.camera.getAllCameras.invalidate();
       } finally {
         setIsLoadingImage(false);
       }
@@ -79,6 +83,7 @@ export default function CameraLocationMarkers({
     onError: () => {
         setIsLoadingImage(false);
         setSelectedCamera(null);
+        void utils.camera.getAllCameras.invalidate();
     }
   });
 
