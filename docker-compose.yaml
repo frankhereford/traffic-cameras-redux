@@ -69,6 +69,7 @@ services:
       - "8080:8080"
     environment:
       RIE_ENDPOINT: "http://proxy:8080/2015-03-31/functions/function/invocations"
+      ENABLE_CORS: "true"
     depends_on:
       - proxy
 
@@ -79,7 +80,6 @@ services:
       - ./nextjs:/app
     ports:
       - 3000:3000
-      #- 5555:5555
     depends_on:
       - postgis
 
@@ -91,12 +91,20 @@ services:
     ports:
       - 80:80
       - 443:443
-      #- 3000:3000
     depends_on:
       - nextjs
-      # - flask
-      # - postgrest
-      # - swagger
+
+
+  #docker compose run --rm psql
+  # psql:
+  #   image: postgis/postgis
+  #   env_file:
+  #     - .env
+  #   command: ["psql", "${DATABASE_URL}"]
+  #   stdin_open: true
+  #   tty: true
+  #   depends_on:
+  #     - postgis
 
 volumes:
   db_data:

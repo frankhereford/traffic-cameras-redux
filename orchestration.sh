@@ -16,20 +16,10 @@ fi
 
 ECR_REGISTRY="${AWS_ACCOUNT_NUMBER}.dkr.ecr.us-east-1.amazonaws.com"
 
-# Function to check login status
-check_login() {
-  if [ -f ~/.docker/config.json ] && grep -q "$ECR_REGISTRY" ~/.docker/config.json; then
-      echo "Already logged in to ECR registry: $ECR_REGISTRY"
-      return 0
-  fi
-  echo "Not logged in to ECR registry: $ECR_REGISTRY"
-  return 1
-}
-
 # Function to perform login
 login() {
-  echo "Logging in to AWS ECR..."
-  aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+  echo "Run the following command to log in to AWS ECR:"
+  echo "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin \"$ECR_REGISTRY\""
 }
 
 # Function to build and push proxy
@@ -133,10 +123,8 @@ if [ "$DO_LOGIN" = false ] && [ "$DO_PROXY" = false ] && [ "$DO_DETECTOR" = fals
     exit 1
 fi
 
-if [ "$DO_PROXY" = true ] || [ "$DO_DETECTOR" = true ]; then
-  if ! check_login; then
-    login
-  fi
+if [ "$DO_LOGIN" = true ] || [ "$DO_PROXY" = true ] || [ "$DO_DETECTOR" = true ]; then
+  login
 fi
 
 if [ "$DO_PROXY" = true ]; then
@@ -145,10 +133,4 @@ fi
 
 if [ "$DO_DETECTOR" = true ]; then
   build_and_push_detector
-fi
-
-if [ "$DO_LOGIN" = true ] && [ "$DO_PROXY" = false ] && [ "$DO_DETECTOR" = false ]; then
-    if ! check_login; then
-        login
-    fi
 fi 

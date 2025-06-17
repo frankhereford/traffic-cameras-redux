@@ -1,4 +1,6 @@
 PyJWT
-requests
+requests==2.31.0
 psycopg2-binary
 prisma
+boto3
+Pillow
