@@ -7,6 +7,7 @@ import {
 import type { SocrataData } from "~/app/_hooks/useSocrataData";
 import CameraLocationMarkers from "./CameraLocationMarkers";
 import { useState } from "react";
+import { api } from "~/trpc/react";
 
 const containerStyle = {
   width: "100vw",
@@ -19,6 +20,7 @@ interface MapViewProps {
 
 function MapView({ socrataData }: MapViewProps) {
   const [zoom, setZoom] = useState(17);
+  const allCameras = api.camera.getAllCameras.useQuery();
 
   const handleCameraChange = (ev: MapCameraChangedEvent) =>
     setZoom(ev.detail.zoom);
@@ -38,7 +40,11 @@ function MapView({ socrataData }: MapViewProps) {
           mapTypeId="satellite"
           onCameraChanged={handleCameraChange}
         >
-          <CameraLocationMarkers socrataData={socrataData} zoom={zoom} />
+          <CameraLocationMarkers
+            socrataData={socrataData}
+            zoom={zoom}
+            allCameras={allCameras.data}
+          />
         </Map>
       </div>
     </APIProvider>
