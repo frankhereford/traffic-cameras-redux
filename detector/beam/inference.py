@@ -40,7 +40,7 @@ def download_models():
 
 @endpoint(
     cpu=1.0,
-    memory=8,
+    memory=3,
     gpu="T4",
     on_start=download_models,
     secrets=["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"],
