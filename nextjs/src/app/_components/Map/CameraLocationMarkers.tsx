@@ -1,6 +1,6 @@
 import type { SocrataData } from "~/app/_hooks/useSocrataData";
-import { AdvancedMarker } from "@vis.gl/react-google-maps";
-import { useMemo, useEffect } from "react";
+import { AdvancedMarker, useMap } from "@vis.gl/react-google-maps";
+import { useMemo, useEffect, useRef } from "react";
 import { api } from "~/trpc/react";
 import { env } from "~/env";
 import { useActiveCameras, type ActiveCamera } from "~/app/_context/ActiveCamerasContext";
@@ -33,9 +33,75 @@ export default function CameraLocationMarkers({
   zoom,
   bounds,
 }: CameraLocationMarkersProps) {
+  const map = useMap();
   const { data: allCameras } = api.camera.getAllCameras.useQuery();
   const { scale } = useMemo(() => getMarkerAttributes(zoom), [zoom]);
   const { activeCameras, setActiveCameras } = useActiveCameras();
+  const projectionRef = useRef<google.maps.MapCanvasProjection | null>(null);
+
+  useEffect(() => {
+    if (!map) return;
+    const overlay = new google.maps.OverlayView();
+    overlay.onAdd = () => {
+      // no-op
+    };
+    overlay.draw = function () {
+      if (!projectionRef.current) {
+        projectionRef.current = this.getProjection();
+      }
+    };
+    overlay.onRemove = () => {
+      projectionRef.current = null;
+    };
+    overlay.setMap(map);
+    return () => {
+      overlay.setMap(null);
+    };
+  }, [map]);
+
+  useEffect(() => {
+    if (!map) return;
+
+    const onIdle = () => {
+      const projection = projectionRef.current;
+      if (!projection) return;
+
+      setActiveCameras((prev) => {
+        const newActiveCameras = new Map(prev);
+        let hasChanges = false;
+        for (const [id, activeCamera] of newActiveCameras.entries()) {
+          if (!activeCamera.camera.location?.coordinates) continue;
+          const pos = {
+            lat: activeCamera.camera.location.coordinates[1]!,
+            lng: activeCamera.camera.location.coordinates[0]!,
+          };
+
+          const point = projection.fromLatLngToDivPixel(
+            new google.maps.LatLng(pos),
+          );
+
+          if (
+            point &&
+            (point.x !== activeCamera.screenX ||
+              point.y !== activeCamera.screenY)
+          ) {
+            newActiveCameras.set(id, {
+              ...activeCamera,
+              screenX: point.x,
+              screenY: point.y,
+            });
+            hasChanges = true;
+          }
+        }
+        return hasChanges ? newActiveCameras : prev;
+      });
+    };
+
+    const idleListener = map.addListener("idle", onIdle);
+    return () => {
+      google.maps.event.removeListener(idleListener);
+    };
+  }, [map, setActiveCameras]);
 
   useEffect(() => {
     console.log("Active cameras list changed:", activeCameras);

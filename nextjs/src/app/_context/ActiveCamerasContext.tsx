@@ -5,6 +5,8 @@ export interface ActiveCamera {
   camera: SocrataData;
   imageUrl: string | null;
   isLoading: boolean;
+  screenX?: number;
+  screenY?: number;
 }
 
 interface ActiveCamerasContextType {
