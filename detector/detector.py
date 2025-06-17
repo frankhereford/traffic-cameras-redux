@@ -72,10 +72,14 @@ def handler(event, context):
 
     for detection in detections:
         box = detection["box"]
-        width = box["xMax"] - box["xMin"]
-        height = box["yMax"] - box["yMin"]
+        # width = box["xMax"] - box["xMin"]
+        # height = box["yMax"] - box["yMin"]
+        width = response_json.get("width")
+        height = response_json.get("height")
+        width_log = f"{width:.0f}" if width is not None else "N/A"
+        height_log = f"{height:.0f}" if height is not None else "N/A"
         print(
-            f'  - Creating detection: "{detection["label"]}" → {box["xMin"]:.2f},{box["yMin"]:.2f} : {box["xMax"]:.2f},{box["yMax"]:.2f} ({width:.2f} x {height:.2f})'
+            f'  - Creating detection: "{detection["label"]}" → {box["xMin"]:.0f},{box["yMin"]:.0f} : {box["xMax"]:.0f},{box["yMax"]:.0f} ({width_log} x {height_log})'
         )
         db.detection.create(
             data={
@@ -89,7 +93,14 @@ def handler(event, context):
             }
         )
 
-    db.image.update(where={"id": image.id}, data={"detectionsProcessed": True})
+    db.image.update(
+        where={"id": image.id},
+        data={
+            "detectionsProcessed": True,
+            "width": response_json.get("width"),
+            "height": response_json.get("height"),
+        },
+    )
     print("Marked image as detectionsProcessed.")
 
     return {
