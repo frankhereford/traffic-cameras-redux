@@ -5,7 +5,7 @@ import {
   type MapCameraChangedEvent,
 } from "@vis.gl/react-google-maps";
 import type { SocrataData } from "~/app/_hooks/useSocrataData";
-import CameraLocationMarkers from "./CameraLocationMarkers";
+import CameraLocationMarkers, { type LatLngBoundsLiteral } from "./CameraLocationMarkers";
 import { useState } from "react";
 
 const containerStyle = {
@@ -19,9 +19,12 @@ interface MapViewProps {
 
 function MapView({ socrataData }: MapViewProps) {
   const [zoom, setZoom] = useState(17);
+  const [bounds, setBounds] = useState<LatLngBoundsLiteral | undefined>(undefined);
 
-  const handleCameraChange = (ev: MapCameraChangedEvent) =>
+  const handleCameraChange = (ev: MapCameraChangedEvent) => {
     setZoom(ev.detail.zoom);
+    setBounds(ev.detail.bounds);
+  }
 
   const position = { lat: 30.262531, lng: -97.753983 };
 
@@ -41,6 +44,7 @@ function MapView({ socrataData }: MapViewProps) {
           <CameraLocationMarkers
             socrataData={socrataData}
             zoom={zoom}
+            bounds={bounds}
           />
         </Map>
       </div>

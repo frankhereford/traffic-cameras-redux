@@ -1,16 +1,26 @@
 import type { SocrataData } from "~/app/_hooks/useSocrataData"
-import { AdvancedMarker, InfoWindow } from "@vis.gl/react-google-maps"
-import { useEffect, useMemo, useState } from "react"
+import { AdvancedMarker, InfoWindow, useMap } from "@vis.gl/react-google-maps"
+import { useEffect, useMemo, useState, useCallback } from "react"
 
 import { api, type RouterOutputs } from "~/trpc/react";
 import { env } from "~/env";
 
 type AllCameras = RouterOutputs["camera"]["getAllCameras"];
 
+export interface LatLngBoundsLiteral {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
+
 interface CameraLocationMarkerProps {
   socrataData: SocrataData[]
   zoom: number
+  bounds?: LatLngBoundsLiteral
 }
+
+const MAX_OPEN_INFO_WINDOWS = 10;
 
 const getMarkerAttributes = (zoom: number) => {
   if (zoom < 10) return { scale: 8 };
@@ -20,13 +30,21 @@ const getMarkerAttributes = (zoom: number) => {
   return { scale: 20 };
 };
 
+interface OpenInfoWindow {
+  camera: SocrataData;
+  imageUrl: string | null;
+  isLoading: boolean;
+}
+
 export default function CameraLocationMarkers({
   socrataData,
   zoom,
+  bounds,
 }: CameraLocationMarkerProps) {
   const { data: allCameras } = api.camera.getAllCameras.useQuery();
   const utils = api.useUtils();
   const { scale } = useMemo(() => getMarkerAttributes(zoom), [zoom]);
+  const [openInfoWindows, setOpenInfoWindows] = useState<Map<string, OpenInfoWindow>>(new Map());
 
   const cameraStatusMap = useMemo(() => {
     if (!allCameras) return new Map<number, string>();
@@ -45,64 +63,142 @@ export default function CameraLocationMarkers({
     return "red";
   };
 
-  const [selectedCamera, setSelectedCamera] = useState<SocrataData | null>(null);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [isLoadingImage, setIsLoadingImage] = useState(false);
-
-  useEffect(() => {
-    return () => {
-      if (imageUrl) {
-        URL.revokeObjectURL(imageUrl);
-      }
-    };
-  }, [imageUrl]);
-
-
   const getJwtMutation = api.camera.getJwt.useMutation({
-    onSuccess: async (data) => {
+    onSuccess: (data, variables) => {
       const url = new URL(env.NEXT_PUBLIC_LAMBDA_URL_PROXY);
       url.pathname = data;
-      try {
-        const response = await fetch(url.toString());
-        if (response.status === 503 || !response.ok) {
-          console.log("Camera is unavailable");
-          handleInfoWindowClose();
+      fetch(url.toString())
+        .then(async (response) => {
+          if (response.status === 503 || !response.ok) {
+            console.log("Camera is unavailable");
+            setOpenInfoWindows(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(variables.cameraId.toString());
+              return newMap;
+            });
+            void utils.camera.getAllCameras.invalidate();
+            return;
+          }
+          const blob = await response.blob();
+          const imageUrl = URL.createObjectURL(blob);
+          setOpenInfoWindows(prev => {
+            const newMap = new Map(prev);
+            const entry = newMap.get(variables.cameraId.toString());
+            if (entry) {
+              newMap.set(variables.cameraId.toString(), { ...entry, imageUrl, isLoading: false });
+            }
+            return newMap;
+          });
           void utils.camera.getAllCameras.invalidate();
-          return;
-        }
-        const blob = await response.blob();
-        setImageUrl(URL.createObjectURL(blob));
-        void utils.camera.getAllCameras.invalidate();
-      } catch (error) {
-        handleInfoWindowClose();
-        void utils.camera.getAllCameras.invalidate();
-      } finally {
-        setIsLoadingImage(false);
-      }
+        })
+        .catch(() => {
+          setOpenInfoWindows(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(variables.cameraId.toString());
+            return newMap;
+          });
+          void utils.camera.getAllCameras.invalidate();
+        });
     },
-    onError: () => {
-        setIsLoadingImage(false);
-        setSelectedCamera(null);
-        void utils.camera.getAllCameras.invalidate();
+    onError: (error, variables) => {
+      setOpenInfoWindows(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(variables.cameraId.toString());
+        return newMap;
+      });
+      void utils.camera.getAllCameras.invalidate();
     }
   });
 
+  useEffect(() => {
+    if (!bounds || !socrataData.length) return;
+
+    const visibleCameras = socrataData.filter(camera => {
+      if (!camera.location?.coordinates) return false;
+      const position = {
+        lat: camera.location.coordinates[1]!,
+        lng: camera.location.coordinates[0]!,
+      };
+      return (
+        position.lat >= bounds.south &&
+        position.lat <= bounds.north &&
+        position.lng >= bounds.west &&
+        position.lng <= bounds.east
+      );
+    });
+
+    const mutate = getJwtMutation.mutate;
+    setOpenInfoWindows(prev => {
+      const newOpenWindows = new Map<string, OpenInfoWindow>();
+      const windowsToKeep = new Set<string>();
+
+      // Identify windows to keep
+      for (const [id, val] of prev.entries()) {
+        const isVisible = visibleCameras.find(c => c.camera_id === id);
+        if (isVisible && newOpenWindows.size < MAX_OPEN_INFO_WINDOWS) {
+          newOpenWindows.set(id, val);
+          windowsToKeep.add(id);
+        } else {
+          if (val.imageUrl) {
+            URL.revokeObjectURL(val.imageUrl);
+          }
+        }
+      }
+
+      const availableSlots = MAX_OPEN_INFO_WINDOWS - newOpenWindows.size;
+      if (availableSlots > 0) {
+        const potentialCameras = visibleCameras
+          .filter(camera => !windowsToKeep.has(camera.camera_id))
+          .filter(camera => {
+            const status = cameraStatusMap.get(parseInt(camera.camera_id, 10));
+            return status === "200" || status === "Unknown";
+          });
+
+        for (let i = 0; i < Math.min(availableSlots, potentialCameras.length); i++) {
+          const camera = potentialCameras[i]!;
+          const cameraId = camera.camera_id;
+          
+          if (!newOpenWindows.has(cameraId)) {
+            newOpenWindows.set(cameraId, { camera, imageUrl: null, isLoading: true });
+            mutate({ cameraId: parseInt(cameraId, 10) });
+          }
+        }
+      }
+
+      // a full new map is returned so react detects the change
+      return new Map(newOpenWindows); 
+    });
+  }, [bounds, socrataData, cameraStatusMap, getJwtMutation.mutate]);
+
   const handleMarkerClick = (camera: SocrataData) => {
-    if (selectedCamera?.camera_id === camera.camera_id) {
-      setSelectedCamera(null);
-      setImageUrl(null);
-      return;
-    }
-    
-    setSelectedCamera(camera);
-    setImageUrl(null);
-    setIsLoadingImage(true);
-    getJwtMutation.mutate({ cameraId: parseInt(camera.camera_id) });
+    setOpenInfoWindows(prev => {
+      const newMap = new Map(prev);
+      if (newMap.has(camera.camera_id)) {
+        const entry = newMap.get(camera.camera_id);
+        if (entry?.imageUrl) {
+          URL.revokeObjectURL(entry.imageUrl);
+        }
+        newMap.delete(camera.camera_id);
+      } else {
+        if (newMap.size < MAX_OPEN_INFO_WINDOWS) {
+          newMap.set(camera.camera_id, { camera, imageUrl: null, isLoading: true });
+          getJwtMutation.mutate({ cameraId: parseInt(camera.camera_id) });
+        }
+      }
+      return newMap;
+    });
   };
 
-  const handleInfoWindowClose = () => {
-    setSelectedCamera(null);
-    setImageUrl(null);
+  const handleInfoWindowClose = (cameraId: string) => {
+    setOpenInfoWindows(prev => {
+      const newMap = new Map(prev);
+      const entry = newMap.get(cameraId);
+      if (entry?.imageUrl) {
+        URL.revokeObjectURL(entry.imageUrl);
+      }
+      newMap.delete(cameraId);
+      return newMap;
+    });
   };
 
   return (
@@ -133,27 +229,28 @@ export default function CameraLocationMarkers({
         }
         return null
       })}
-      {selectedCamera && (
+      {Array.from(openInfoWindows.entries()).map(([cameraId, { camera, imageUrl, isLoading }]) => (
         <InfoWindow
+          key={cameraId}
           position={{
-            lat: selectedCamera.location.coordinates[1]!,
-            lng: selectedCamera.location.coordinates[0]!,
+            lat: camera.location.coordinates[1]!,
+            lng: camera.location.coordinates[0]!,
           }}
-          onCloseClick={handleInfoWindowClose}
+          onCloseClick={() => handleInfoWindowClose(cameraId)}
         >
-          {isLoadingImage ? (
+          {isLoading ? (
             <div>Loading image...</div>
           ) : imageUrl ? (
             <img
               src={imageUrl}
-              alt={`Camera ${selectedCamera.camera_id}`}
+              alt={`Camera ${camera.camera_id}`}
               style={{ maxWidth: "300px", maxHeight: "300px" }}
             />
           ) : (
             <div>Image not available</div>
           )}
         </InfoWindow>
-      )}
+      ))}
     </>
   )
 }
