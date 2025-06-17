@@ -151,7 +151,7 @@ export default function CameraLocationMarkers({
           .filter(camera => !windowsToKeep.has(camera.camera_id))
           .filter(camera => {
             const status = cameraStatusMap.get(parseInt(camera.camera_id, 10));
-            return status === "200" || status === "Unknown";
+            return status === "200" || status === undefined;
           });
 
         for (let i = 0; i < Math.min(availableSlots, potentialCameras.length); i++) {
