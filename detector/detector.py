@@ -118,6 +118,7 @@ def handler(event, context):
             image_height = img_height
 
             border = int(os.environ.get("DETECTION_IMAGE_BORDER", 10))
+            jpeg_quality = int(os.environ.get("DETECTION_IMAGE_QUALITY", 85))
 
             for detection in created_detections:
                 left = max(0, detection.xMin - border)
@@ -128,7 +129,9 @@ def handler(event, context):
                 cropped_image = source_image.crop((left, top, right, bottom))
 
                 img_byte_arr = io.BytesIO()
-                cropped_image.save(img_byte_arr, format="PNG")
+                cropped_image.convert("RGB").save(
+                    img_byte_arr, format="JPEG", quality=jpeg_quality
+                )
                 img_byte_arr_value = img_byte_arr.getvalue()
 
                 # sha256_hash = hashlib.sha256(img_byte_arr_value).hexdigest()
@@ -136,12 +139,12 @@ def handler(event, context):
                 # print(f"Detection {detection.id}: new image SHA256 is {sha256_hash}")
 
                 date_str = image.createdAt.strftime("%Y%m%d-%H%M%S")
-                s3_key = f"detections/{image.camera.coaId}/{date_str}-{image.id}/{detection.label}-{detection.id}.png"
+                s3_key = f"detections/{image.camera.coaId}/{date_str}-{image.id}/{detection.label}-{detection.id}.jpg"
                 s3_client.put_object(
                     Bucket=bucket,
                     Key=s3_key,
                     Body=img_byte_arr_value,
-                    ContentType="image/png",
+                    ContentType="image/jpeg",
                 )
                 print(
                     f"Detection {detection.id}  -> Uploaded to s3://{bucket}/{s3_key}"
