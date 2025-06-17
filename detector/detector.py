@@ -4,6 +4,10 @@ import re
 import jwt
 import requests
 from prisma import Prisma
+import boto3
+import hashlib
+from PIL import Image as PILImage
+import io
 
 
 db = Prisma()
@@ -22,7 +26,8 @@ def handler(event, context):
     # print("Received event: " + json.dumps(event, indent=2)) # keep this comment
 
     key = event["Records"][0]["s3"]["object"]["key"]
-    print(f"Received key: {key}")
+    bucket = event["Records"][0]["s3"]["bucket"]["name"]
+    print(f"Received key: {key} from bucket: {bucket}")
 
     match = re.search(r"([^/]+)\.jpg$", key)
     if not match:
@@ -70,35 +75,75 @@ def handler(event, context):
     detections = response_json["detections"]
     print(f"Found {len(detections)} detections.")
 
-    for detection in detections:
-        box = detection["box"]
-        # width = box["xMax"] - box["xMin"]
-        # height = box["yMax"] - box["yMin"]
-        width = response_json.get("width")
-        height = response_json.get("height")
-        width_log = f"{width:.0f}" if width is not None else "N/A"
-        height_log = f"{height:.0f}" if height is not None else "N/A"
-        print(
-            f'  - Creating detection: "{detection["label"]}" → {box["xMin"]:.0f},{box["yMin"]:.0f} : {box["xMax"]:.0f},{box["yMax"]:.0f} ({width_log} x {height_log})'
-        )
-        db.detection.create(
-            data={
-                "label": detection["label"],
-                "confidence": detection["confidence"],
-                "xMin": int(box["xMin"]),
-                "yMin": int(box["yMin"]),
-                "xMax": int(box["xMax"]),
-                "yMax": int(box["yMax"]),
-                "image": {"connect": {"id": image.id}},
-            }
-        )
+    image_width = response_json.get("width")
+    image_height = response_json.get("height")
+
+    # 1. Create all detections in DB
+    if detections:
+        new_detections_data = []
+        for detection in detections:
+            box = detection["box"]
+            new_detections_data.append(
+                {
+                    "label": detection["label"],
+                    "confidence": detection["confidence"],
+                    "xMin": int(box["xMin"]),
+                    "yMin": int(box["yMin"]),
+                    "xMax": int(box["xMax"]),
+                    "yMax": int(box["yMax"]),
+                    "imageId": image.id,
+                }
+            )
+
+        if new_detections_data:
+            db.detection.create_many(data=new_detections_data, skip_duplicates=True)
+            print(f"Created {len(new_detections_data)} detections in database.")
+
+    # 2. Query them back
+    created_detections = db.detection.find_many(where={"imageId": image.id})
+    print(f"Queried back {len(created_detections)} detections.")
+
+    # 3. Process detections: crop, hash, print
+    if created_detections:
+        s3_client = boto3.client("s3")
+        try:
+            s3_response = s3_client.get_object(Bucket=bucket, Key=key)
+            image_bytes = s3_response["Body"].read()
+            source_image = PILImage.open(io.BytesIO(image_bytes))
+
+            img_width, img_height = source_image.size
+            print(f"Source image size: {img_width}x{img_height}")
+
+            image_width = img_width
+            image_height = img_height
+
+            border = int(os.environ.get("DETECTION_IMAGE_BORDER", 10))
+
+            for detection in created_detections:
+                left = max(0, detection.xMin - border)
+                top = max(0, detection.yMin - border)
+                right = min(img_width, detection.xMax + border)
+                bottom = min(img_height, detection.yMax + border)
+
+                cropped_image = source_image.crop((left, top, right, bottom))
+
+                img_byte_arr = io.BytesIO()
+                cropped_image.save(img_byte_arr, format="JPEG")
+                img_byte_arr = img_byte_arr.getvalue()
+
+                sha256_hash = hashlib.sha256(img_byte_arr).hexdigest()
+
+                print(f"Detection {detection.id}: new image SHA256 is {sha256_hash}")
+
+        except Exception as e:
+            print(f"Error processing image from S3: {e}")
 
     db.image.update(
         where={"id": image.id},
         data={
             "detectionsProcessed": True,
-            "width": response_json.get("width"),
-            "height": response_json.get("height"),
+            "width": image_width,
+            "height": image_height,
         },
     )
     print("Marked image as detectionsProcessed.")
