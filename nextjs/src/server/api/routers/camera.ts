@@ -17,4 +17,23 @@ export const cameraRouter = createTRPCRouter({
 
       return jwt.sign(payload, env.JWT_SHARED_SECRET);
     }),
+  getAllCameras: publicProcedure.query(({ ctx }) => {
+    return ctx.db.camera.findMany({
+      include: {
+        status: true,
+      },
+    });
+  }),
+  getWorkingCameras: publicProcedure.query(({ ctx }) => {
+    return ctx.db.camera.findMany({
+      where: {
+        status: {
+          name: "200",
+        },
+      },
+      include: {
+        status: true,
+      },
+    });
+  }),
 }); 
