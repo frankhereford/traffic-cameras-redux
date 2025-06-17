@@ -292,6 +292,10 @@ def handler(event, context):
                             print(
                                 f"File already exists in S3: s3://{s3_bucket}/{s3_key}, skipping upload."
                             )
+                            # Update image record to reflect it exists in S3
+                            transaction.image.update(
+                                where={"id": image_record.id}, data={"s3Uploaded": True}
+                            )
                         except s3.exceptions.ClientError as e:
                             if e.response["Error"]["Code"] == "404":
                                 print(
@@ -304,6 +308,11 @@ def handler(event, context):
                                     ExtraArgs={"ContentType": "image/jpeg"},
                                 )
                                 print("Successfully uploaded to S3.")
+                                # Update image record after successful upload
+                                transaction.image.update(
+                                    where={"id": image_record.id},
+                                    data={"s3Uploaded": True},
+                                )
                             else:
                                 # Log other client errors
                                 print(f"Error checking S3 for {s3_key}: {e}")
