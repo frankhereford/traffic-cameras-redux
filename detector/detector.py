@@ -23,6 +23,15 @@ def handler(event, context):
     key = event["Records"][0]["s3"]["object"]["key"]
     print(f"Received key: {key}")
 
+    image_hash = os.path.basename(key)
+    image = db.image.find_unique(where={"hash": image_hash})
+    if not image:
+        print(f"Image with hash {image_hash} not found in database.")
+        return {
+            "statusCode": 404,
+            "body": json.dumps({"message": f"Image with hash {image_hash} not found."}),
+        }
+
     jwt_shared_secret = os.environ["JWT_SHARED_SECRET"]
     payload = {"key": key}
     encoded_jwt = jwt.encode(payload, jwt_shared_secret, algorithm="HS256")
@@ -47,8 +56,25 @@ def handler(event, context):
 
     response_json = json.loads(response.text)
     detections = response_json["detections"]
+    print(f"Found {len(detections)} detections.")
+
     for detection in detections:
-        print(detection["label"])
+        box = detection["box"]
+        print(f"  - Creating detection: {detection['label']}")
+        db.detection.create(
+            data={
+                "label": detection["label"],
+                "confidence": detection["confidence"],
+                "xMin": int(box["xMin"]),
+                "yMin": int(box["yMin"]),
+                "xMax": int(box["xMax"]),
+                "yMax": int(box["yMax"]),
+                "image": {"connect": {"id": image.id}},
+            }
+        )
+
+    db.image.update(where={"id": image.id}, data={"detectionsProcessed": True})
+    print("Marked image as detectionsProcessed.")
 
     return {
         "statusCode": 200,
