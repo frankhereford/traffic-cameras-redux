@@ -1,8 +1,9 @@
 import type { SocrataData } from "~/app/_hooks/useSocrataData";
 import { AdvancedMarker } from "@vis.gl/react-google-maps";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { env } from "~/env";
+import { useActiveCameras, type ActiveCamera } from "~/app/_context/ActiveCamerasContext";
 
 export interface LatLngBoundsLiteral {
   north: number;
@@ -19,12 +20,6 @@ interface CameraLocationMarkersProps {
 
 const MAX_ACTIVE_CAMERAS = 10;
 
-interface ActiveCamera {
-  camera: SocrataData;
-  imageUrl: string | null;
-  isLoading: boolean;
-}
-
 const getMarkerAttributes = (zoom: number) => {
   if (zoom < 10) return { scale: 8 };
   if (zoom < 12) return { scale: 9 };
@@ -40,9 +35,7 @@ export default function CameraLocationMarkers({
 }: CameraLocationMarkersProps) {
   const { data: allCameras } = api.camera.getAllCameras.useQuery();
   const { scale } = useMemo(() => getMarkerAttributes(zoom), [zoom]);
-  const [activeCameras, setActiveCameras] = useState<
-    Map<string, ActiveCamera>
-  >(new Map());
+  const { activeCameras, setActiveCameras } = useActiveCameras();
 
   useEffect(() => {
     console.log("Active cameras list changed:", activeCameras);

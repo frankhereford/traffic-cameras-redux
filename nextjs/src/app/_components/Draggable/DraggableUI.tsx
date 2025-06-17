@@ -1,9 +1,11 @@
 "use client";
 
+import { useActiveCameras } from "~/app/_context/ActiveCamerasContext";
 import CameraImage from "./CameraImage";
 
 export default function DraggableUI() {
-  const imageUrl = "https://placehold.co/320x240/png";
+  const { activeCameras } = useActiveCameras();
+
   return (
     <div
       style={{
@@ -15,7 +17,11 @@ export default function DraggableUI() {
         pointerEvents: 'none'
       }}
     >
-      <CameraImage imageUrl={imageUrl} />
+      {Array.from(activeCameras.entries()).map(([id, camera]) =>
+        camera.imageUrl ? (
+          <CameraImage key={id} imageUrl={camera.imageUrl} />
+        ) : null
+      )}
     </div>
   );
 } 

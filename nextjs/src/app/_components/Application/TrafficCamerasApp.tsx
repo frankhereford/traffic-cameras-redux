@@ -1,26 +1,20 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import MapView from "~/app/_components/Map/Map";
-import useGetSocrataData from "~/app/_hooks/useSocrataData";
-import type { SocrataData } from "~/app/_hooks/useSocrataData"
-import DraggableUI from "../Draggable/DraggableUI";
+import DraggableUI from "~/app/_components/Draggable/DraggableUI";
+import useSocrataData from "~/app/_hooks/useSocrataData";
+import { ActiveCamerasProvider } from "~/app/_context/ActiveCamerasContext";
 
-export default function CameraGeoreferenceApp() {
-  const { data, isLoading, isError, error } = useGetSocrataData()
-  const [storedData, setStoredData] = useState<SocrataData[] | null>(null)
+export default function TrafficCamerasApp() {
+  const { data: socrataData, isLoading, isError } = useSocrataData();
 
-  useEffect(() => {
-    if (data) {
-      setStoredData(data)
-    }
-  }, [data])
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Error fetching data</div>;
 
-
-    return (
-        <div style={{ position: 'relative', width: '100vw', height: '100vh' }}>
-            <MapView socrataData={storedData ?? []} />
-            <DraggableUI />
-        </div>
-    )
+  return (
+    <ActiveCamerasProvider>
+      <MapView socrataData={socrataData ?? []} />
+      <DraggableUI />
+    </ActiveCamerasProvider>
+  );
 }
