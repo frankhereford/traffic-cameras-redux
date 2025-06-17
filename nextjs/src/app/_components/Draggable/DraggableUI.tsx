@@ -21,9 +21,6 @@ export default function DraggableUI() {
             display: 'flex',
             flexDirection: 'column'
         }}
-
-        // minWidth={200}
-        // minHeight={50}
         bounds="parent"
         lockAspectRatio
         enableResizing={false}
