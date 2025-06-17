@@ -140,7 +140,8 @@ def handler(event, context):
 
                 date_str = image.createdAt.strftime("%Y%m%d-%H%M%S")
                 confidence_str = f"{int(detection.confidence * 100):02d}"
-                s3_key = f"detections/{image.camera.coaId}/{date_str}-{image.id}/{confidence_str}-{detection.label}-{detection.id}.jpg"
+                label = detection.label.replace(" ", "-")
+                s3_key = f"detections/{image.camera.coaId}/{date_str}-{image.id}/{confidence_str}-{label}-{detection.id}.jpg"
                 s3_client.put_object(
                     Bucket=bucket,
                     Key=s3_key,
@@ -149,6 +150,10 @@ def handler(event, context):
                 )
                 print(
                     f"Detection {detection.id}  -> Uploaded to s3://{bucket}/{s3_key}"
+                )
+
+                db.detection.update(
+                    where={"id": detection.id}, data={"picture": s3_key}
                 )
 
         except Exception as e:
