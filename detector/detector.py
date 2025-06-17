@@ -139,7 +139,8 @@ def handler(event, context):
                 # print(f"Detection {detection.id}: new image SHA256 is {sha256_hash}")
 
                 date_str = image.createdAt.strftime("%Y%m%d-%H%M%S")
-                s3_key = f"detections/{image.camera.coaId}/{date_str}-{image.id}/{detection.label}-{detection.id}.jpg"
+                confidence_str = f"{int(detection.confidence * 100):02d}"
+                s3_key = f"detections/{image.camera.coaId}/{date_str}-{image.id}/{confidence_str}-{detection.label}-{detection.id}.jpg"
                 s3_client.put_object(
                     Bucket=bucket,
                     Key=s3_key,
