@@ -72,7 +72,11 @@ def handler(event, context):
 
     for detection in detections:
         box = detection["box"]
-        print(f"  - Creating detection: {detection['label']}")
+        width = box["xMax"] - box["xMin"]
+        height = box["yMax"] - box["yMin"]
+        print(
+            f'  - Creating detection: "{detection["label"]}" → {box["xMin"]:.2f},{box["yMin"]:.2f} : {box["xMax"]:.2f},{box["yMax"]:.2f} ({width:.2f} x {height:.2f})'
+        )
         db.detection.create(
             data={
                 "label": detection["label"],
