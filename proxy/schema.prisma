@@ -119,6 +119,8 @@ model Image {
     status              Status?     @relation(fields: [statusId], references: [id])
     s3Uploaded          Boolean     @default(false)
     detectionsProcessed Boolean     @default(false)
+    width               Float?
+    height              Float?
     detections          Detection[]
 
     createdAt DateTime @default(now())
