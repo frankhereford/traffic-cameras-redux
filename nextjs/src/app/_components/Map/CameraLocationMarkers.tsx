@@ -1,6 +1,7 @@
 import type { SocrataData } from "~/app/_hooks/useSocrataData"
 import { AdvancedMarker, InfoWindow, useMap } from "@vis.gl/react-google-maps"
 import { useEffect, useMemo, useState, useCallback } from "react"
+import debounce from 'lodash.debounce';
 
 import { api, type RouterOutputs } from "~/trpc/react";
 import { env } from "~/env";
@@ -46,6 +47,20 @@ export default function CameraLocationMarkers({
   const { scale } = useMemo(() => getMarkerAttributes(zoom), [zoom]);
   const [openInfoWindows, setOpenInfoWindows] = useState<Map<string, OpenInfoWindow>>(new Map());
 
+  const debouncedInvalidate = useMemo(
+    () =>
+      debounce(() => {
+        void utils.camera.getAllCameras.invalidate();
+      }, 5000),
+    [utils.camera.getAllCameras]
+  );
+
+  useEffect(() => {
+    if (bounds) {
+      debouncedInvalidate();
+    }
+  }, [bounds, debouncedInvalidate]);
+
   const cameraStatusMap = useMemo(() => {
     if (!allCameras) return new Map<number, string>();
     return new Map<number, string>(
@@ -76,7 +91,7 @@ export default function CameraLocationMarkers({
               newMap.delete(variables.cameraId.toString());
               return newMap;
             });
-            void utils.camera.getAllCameras.invalidate();
+            debouncedInvalidate();
             return;
           }
           const blob = await response.blob();
@@ -89,7 +104,7 @@ export default function CameraLocationMarkers({
             }
             return newMap;
           });
-          void utils.camera.getAllCameras.invalidate();
+          debouncedInvalidate();
         })
         .catch(() => {
           setOpenInfoWindows(prev => {
@@ -97,7 +112,7 @@ export default function CameraLocationMarkers({
             newMap.delete(variables.cameraId.toString());
             return newMap;
           });
-          void utils.camera.getAllCameras.invalidate();
+          debouncedInvalidate();
         });
     },
     onError: (error, variables) => {
@@ -106,7 +121,7 @@ export default function CameraLocationMarkers({
         newMap.delete(variables.cameraId.toString());
         return newMap;
       });
-      void utils.camera.getAllCameras.invalidate();
+      debouncedInvalidate();
     }
   });
 
