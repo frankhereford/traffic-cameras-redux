@@ -30,10 +30,8 @@ export default function DraggableUI() {
       >
         <GlassMorphism tintColor="#Ffffff" tintOpacity={.1} shadowColor="#fff5"
           shadowBlur={10} shadowSpread={5} borderRadius={20} outerShadowBlur={4} >
-          <div >
-              <h2>Draggable Panel</h2>
-              <p>This is a UI panel that you can move around and resize.</p>
-              <p>You can put your controls and information here.</p>
+          <div>
+            Camera Image Here
           </div>
         </GlassMorphism>
       </Rnd>
