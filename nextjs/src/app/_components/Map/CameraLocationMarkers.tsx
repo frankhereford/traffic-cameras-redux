@@ -55,12 +55,6 @@ export default function CameraLocationMarkers({
     [utils.camera.getAllCameras]
   );
 
-  // useEffect(() => {
-  //   if (bounds) {
-  //     debouncedInvalidate();
-  //   }
-  // }, [bounds, debouncedInvalidate]);
-
   const cameraStatusMap = useMemo(() => {
     if (!allCameras) return new Map<number, string>();
     return new Map<number, string>(
