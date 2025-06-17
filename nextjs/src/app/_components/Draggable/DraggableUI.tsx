@@ -1,6 +1,7 @@
 "use client";
 
 import { Rnd } from "react-rnd";
+import { GlassMorphism } from "liquid-glass-react";
 
 export default function DraggableUI() {
   return (
@@ -16,9 +17,9 @@ export default function DraggableUI() {
     >
       <Rnd
         style={{
-            backgroundColor: 'white',
-            border: '1px solid #ccc',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+            // backgroundColor: 'white',
+            // border: '1px solid #ccc',
+            // boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
             pointerEvents: 'auto',
             display: 'flex',
             flexDirection: 'column'
@@ -34,14 +35,17 @@ export default function DraggableUI() {
         bounds="parent"
         dragHandleClassName="drag-handle"
       >
-        <div className="drag-handle" style={{ cursor: 'move', backgroundColor: '#f0f0f0', padding: '5px', borderBottom: '1px solid #ccc' }}>
-            Drag Handle
-        </div>
-        <div style={{ flexGrow: 1, padding: '10px', overflow: 'auto' }}>
-            <h2>Draggable Panel</h2>
-            <p>This is a UI panel that you can move around and resize.</p>
-            <p>You can put your controls and information here.</p>
-        </div>
+        <GlassMorphism>
+
+          <div className="drag-handle" style={{ cursor: 'move', backgroundColor: '#f0f0f0', padding: '5px', borderBottom: '1px solid #ccc' }}>
+              Drag Handle
+          </div>
+          <div style={{ flexGrow: 1, padding: '10px', overflow: 'auto' }}>
+              <h2>Draggable Panel</h2>
+              <p>This is a UI panel that you can move around and resize.</p>
+              <p>You can put your controls and information here.</p>
+          </div>
+        </GlassMorphism>
       </Rnd>
     </div>
   );
