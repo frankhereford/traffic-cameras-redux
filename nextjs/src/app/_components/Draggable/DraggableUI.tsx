@@ -33,13 +33,8 @@ export default function DraggableUI() {
         minWidth={200}
         minHeight={150}
         bounds="parent"
-        dragHandleClassName="drag-handle"
       >
         <GlassMorphism>
-
-          <div className="drag-handle" style={{ cursor: 'move', backgroundColor: '#f0f0f0', padding: '5px', borderBottom: '1px solid #ccc' }}>
-              Drag Handle
-          </div>
           <div style={{ flexGrow: 1, padding: '10px', overflow: 'auto' }}>
               <h2>Draggable Panel</h2>
               <p>This is a UI panel that you can move around and resize.</p>
