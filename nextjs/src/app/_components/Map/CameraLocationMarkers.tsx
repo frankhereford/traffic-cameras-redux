@@ -67,13 +67,12 @@ export default function CameraLocationMarkers({
       if (!projection) return;
 
       setActiveCameras((prev) => {
-        const newActiveCameras = new Map(prev);
         let hasChanges = false;
-        for (const [id, activeCamera] of newActiveCameras.entries()) {
-          if (!activeCamera.camera.location?.coordinates) continue;
+        const newActiveCameras = prev.map((activeCamera) => {
+          if (!activeCamera.location?.coordinates) return activeCamera;
           const pos = {
-            lat: activeCamera.camera.location.coordinates[1]!,
-            lng: activeCamera.camera.location.coordinates[0]!,
+            lat: activeCamera.location.coordinates[1]!,
+            lng: activeCamera.location.coordinates[0]!,
           };
 
           const point = projection.fromLatLngToDivPixel(
@@ -85,14 +84,16 @@ export default function CameraLocationMarkers({
             (point.x !== activeCamera.screenX ||
               point.y !== activeCamera.screenY)
           ) {
-            newActiveCameras.set(id, {
+            hasChanges = true;
+            return {
               ...activeCamera,
               screenX: point.x,
               screenY: point.y,
-            });
-            hasChanges = true;
+            };
           }
-        }
+          return activeCamera;
+        });
+
         return hasChanges ? newActiveCameras : prev;
       });
     };
@@ -133,46 +134,59 @@ export default function CameraLocationMarkers({
           if (response.status === 503 || !response.ok) {
             console.log("Camera is unavailable");
             setActiveCameras((prev) => {
-              const newMap = new Map(prev);
-              const entry = newMap.get(variables.cameraId.toString());
-              if (entry?.imageUrl) URL.revokeObjectURL(entry.imageUrl);
-              newMap.delete(variables.cameraId.toString());
-              return newMap;
+              const cameraToRemove = prev.find(
+                (c) => c.camera_id === variables.cameraId.toString(),
+              );
+              if (cameraToRemove?.imageUrl) {
+                URL.revokeObjectURL(cameraToRemove.imageUrl);
+              }
+              return prev.filter(
+                (camera) =>
+                  camera.camera_id !== variables.cameraId.toString(),
+              );
             });
             return;
           }
           const blob = await response.blob();
           const imageUrl = URL.createObjectURL(blob);
           setActiveCameras((prev) => {
-            const newMap = new Map(prev);
-            const entry = newMap.get(variables.cameraId.toString());
-            if (entry) {
-              newMap.set(variables.cameraId.toString(), {
-                ...entry,
-                imageUrl,
-                isLoading: false,
-              });
-            }
-            return newMap;
+            return prev.map((camera) => {
+              if (camera.camera_id === variables.cameraId.toString()) {
+                return {
+                  ...camera,
+                  imageUrl,
+                  isLoading: false,
+                };
+              }
+              return camera;
+            });
           });
         })
         .catch(() => {
           setActiveCameras((prev) => {
-            const newMap = new Map(prev);
-            const entry = newMap.get(variables.cameraId.toString());
-            if (entry?.imageUrl) URL.revokeObjectURL(entry.imageUrl);
-            newMap.delete(variables.cameraId.toString());
-            return newMap;
+            const cameraToRemove = prev.find(
+              (c) => c.camera_id === variables.cameraId.toString(),
+            );
+            if (cameraToRemove?.imageUrl) {
+              URL.revokeObjectURL(cameraToRemove.imageUrl);
+            }
+            return prev.filter(
+              (camera) => camera.camera_id !== variables.cameraId.toString(),
+            );
           });
         });
     },
     onError: (_error, variables) => {
       setActiveCameras((prev) => {
-        const newMap = new Map(prev);
-        const entry = newMap.get(variables.cameraId.toString());
-        if (entry?.imageUrl) URL.revokeObjectURL(entry.imageUrl);
-        newMap.delete(variables.cameraId.toString());
-        return newMap;
+        const cameraToRemove = prev.find(
+          (c) => c.camera_id === variables.cameraId.toString(),
+        );
+        if (cameraToRemove?.imageUrl) {
+          URL.revokeObjectURL(cameraToRemove.imageUrl);
+        }
+        return prev.filter(
+          (camera) => camera.camera_id !== variables.cameraId.toString(),
+        );
       });
     },
   });
@@ -196,35 +210,33 @@ export default function CameraLocationMarkers({
 
     const mutate = getJwtMutation.mutate;
     setActiveCameras((prev) => {
-      const newActiveCameras = new Map<string, ActiveCamera>();
-
       // Keep existing cameras that are still visible
-      for (const [id, val] of prev.entries()) {
-        const isVisible = visibleCameras.find((c) => c.camera_id === id);
-        if (isVisible) {
-          newActiveCameras.set(id, val);
-        } else {
-          if (val.imageUrl) {
-            URL.revokeObjectURL(val.imageUrl);
-          }
+      const newActiveCameras = prev.filter((camera) => {
+        const isVisible = visibleCameras.some(
+          (c) => c.camera_id === camera.camera_id,
+        );
+        if (!isVisible && camera.imageUrl) {
+          URL.revokeObjectURL(camera.imageUrl);
         }
-      }
+        return isVisible;
+      });
 
       // If we have more than the max, prune randomly
-      while (newActiveCameras.size > MAX_ACTIVE_CAMERAS) {
-        const keys = Array.from(newActiveCameras.keys());
-        const randomKey = keys[Math.floor(Math.random() * keys.length)]!;
-        const entry = newActiveCameras.get(randomKey);
-        if (entry?.imageUrl) {
-          URL.revokeObjectURL(entry.imageUrl);
+      while (newActiveCameras.length > MAX_ACTIVE_CAMERAS) {
+        const randomIndex = Math.floor(Math.random() * newActiveCameras.length);
+        const removedCamera = newActiveCameras.splice(randomIndex, 1)[0];
+        if (removedCamera?.imageUrl) {
+          URL.revokeObjectURL(removedCamera.imageUrl);
         }
-        newActiveCameras.delete(randomKey);
       }
 
-      const availableSlots = MAX_ACTIVE_CAMERAS - newActiveCameras.size;
+      const availableSlots = MAX_ACTIVE_CAMERAS - newActiveCameras.length;
       if (availableSlots > 0) {
         const potentialCameras = visibleCameras
-          .filter((camera) => !newActiveCameras.has(camera.camera_id))
+          .filter(
+            (camera) =>
+              !newActiveCameras.some((c) => c.camera_id === camera.camera_id),
+          )
           .filter((camera) => {
             const status = cameraStatusMap.get(parseInt(camera.camera_id, 10));
             return status === "200";
@@ -247,9 +259,9 @@ export default function CameraLocationMarkers({
           const camera = potentialCameras[i]!;
           const cameraId = camera.camera_id;
 
-          if (!newActiveCameras.has(cameraId)) {
-            newActiveCameras.set(cameraId, {
-              camera,
+          if (!newActiveCameras.some((c) => c.camera_id === cameraId)) {
+            newActiveCameras.push({
+              ...camera,
               imageUrl: null,
               isLoading: true,
             });
@@ -258,7 +270,7 @@ export default function CameraLocationMarkers({
         }
       }
 
-      return new Map(newActiveCameras);
+      return newActiveCameras;
     });
   }, [bounds, socrataData, cameraStatusMap, getJwtMutation.mutate]);
 

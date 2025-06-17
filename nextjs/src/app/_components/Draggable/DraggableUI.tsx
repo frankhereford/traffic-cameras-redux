@@ -17,9 +17,9 @@ export default function DraggableUI() {
         pointerEvents: 'none'
       }}
     >
-      {Array.from(activeCameras.entries()).map(([id, camera]) =>
+      {activeCameras.map((camera) =>
         camera.imageUrl ? (
-          <CameraImage key={id} imageUrl={camera.imageUrl} />
+          <CameraImage key={camera.camera_id} imageUrl={camera.imageUrl} />
         ) : null
       )}
     </div>

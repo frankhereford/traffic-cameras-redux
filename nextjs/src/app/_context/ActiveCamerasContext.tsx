@@ -1,23 +1,24 @@
 import type { SocrataData } from "~/app/_hooks/useSocrataData";
 import { createContext, useState, useContext, type ReactNode } from "react";
 
-export interface ActiveCamera {
-  camera: SocrataData;
+export type ActiveCamera = SocrataData & {
   imageUrl: string | null;
   isLoading: boolean;
   screenX?: number;
   screenY?: number;
-}
+};
 
 interface ActiveCamerasContextType {
-  activeCameras: Map<string, ActiveCamera>;
-  setActiveCameras: React.Dispatch<React.SetStateAction<Map<string, ActiveCamera>>>;
+  activeCameras: ActiveCamera[];
+  setActiveCameras: React.Dispatch<React.SetStateAction<ActiveCamera[]>>;
 }
 
-const ActiveCamerasContext = createContext<ActiveCamerasContextType | undefined>(undefined);
+const ActiveCamerasContext = createContext<ActiveCamerasContextType | undefined>(
+  undefined,
+);
 
 export function ActiveCamerasProvider({ children }: { children: ReactNode }) {
-  const [activeCameras, setActiveCameras] = useState<Map<string, ActiveCamera>>(new Map());
+  const [activeCameras, setActiveCameras] = useState<ActiveCamera[]>([]);
 
   return (
     <ActiveCamerasContext.Provider value={{ activeCameras, setActiveCameras }}>
