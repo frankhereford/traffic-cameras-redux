@@ -5,7 +5,7 @@ import {
   type MapCameraChangedEvent,
 } from "@vis.gl/react-google-maps";
 import type { SocrataData } from "~/app/_hooks/useSocrataData";
-import CameraLocationMarkersInfoBoxes, { type LatLngBoundsLiteral } from "./CameraLocationMarkersInfoBoxes";
+import CameraLocationMarkers, { type LatLngBoundsLiteral } from "./CameraLocationMarkers";
 import { useState } from "react";
 
 const containerStyle = {
@@ -41,7 +41,7 @@ function MapView({ socrataData }: MapViewProps) {
           mapTypeId="satellite"
           onCameraChanged={handleCameraChange}
         >
-          <CameraLocationMarkersInfoBoxes
+          <CameraLocationMarkers
             socrataData={socrataData}
             zoom={zoom}
             bounds={bounds}
