@@ -64,7 +64,7 @@ def handler(event, context):
 
     response = requests.post(url, headers=headers, json=data)
 
-    print("Received response: " + response.text)
+    # print("Received response: " + response.text)
 
     response_json = json.loads(response.text)
     detections = response_json["detections"]
