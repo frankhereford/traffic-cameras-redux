@@ -45,6 +45,11 @@ def handler(event, context):
 
     print("Received response: " + response.text)
 
+    response_json = json.loads(response.text)
+    detections = response_json["detections"]
+    for detection in detections:
+        print(detection["label"])
+
     return {
         "statusCode": 200,
         "body": json.dumps(
