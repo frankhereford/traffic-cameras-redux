@@ -14,7 +14,7 @@ export default function CameraImage({ imageUrl }: CameraImageProps) {
       style={{
         pointerEvents: 'auto',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
       }}
       bounds="parent"
       lockAspectRatio
@@ -23,6 +23,9 @@ export default function CameraImage({ imageUrl }: CameraImageProps) {
       <GlassMorphism tintColor="#Ffffff" tintOpacity={.1} shadowColor="#fff5"
         shadowBlur={10} shadowSpread={5} borderRadius={20} outerShadowBlur={4} >
         <Image
+          style={{
+            pointerEvents: 'none',
+          }}
           src={imageUrl}
           alt="Traffic camera"
           width={320}
