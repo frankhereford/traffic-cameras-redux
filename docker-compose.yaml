@@ -80,7 +80,6 @@ services:
       - ./nextjs:/app
     ports:
       - 3000:3000
-      #- 5555:5555
     depends_on:
       - postgis
 
@@ -92,12 +91,9 @@ services:
     ports:
       - 80:80
       - 443:443
-      #- 3000:3000
     depends_on:
       - nextjs
-      # - flask
-      # - postgrest
-      # - swagger
+
 
   #docker compose run --rm psql
   # psql:
