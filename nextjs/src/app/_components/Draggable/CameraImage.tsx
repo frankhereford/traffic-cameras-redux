@@ -20,7 +20,7 @@ export default function CameraImage({
     x: screenX || 0,
     y: screenY || 0,
   });
-  const [size, setSize] = useState({ width: 320, height: 240 });
+  const [size, setSize] = useState({ width: 480 , height: 270  });
 
   useEffect(() => {
     if (screenX !== undefined && screenY !== undefined) {
@@ -39,7 +39,7 @@ export default function CameraImage({
       lockAspectRatio
       enableResizing
       position={position}
-      size={{ width: size.width, height: size.height }}
+      size={{ width: size.width, height: size.height}}
       onDragStop={(e, d) => {
         setPosition({ x: d.x, y: d.y });
       }}
