@@ -52,8 +52,8 @@ export default function CameraImage({
       }}
     >
       <GlassMorphism tintColor="#Ffffff" tintOpacity={.1} shadowColor="#fff5"
-        shadowBlur={10} shadowSpread={5} borderRadius={20} outerShadowBlur={4} >
-        <Image
+        shadowBlur={10} shadowSpread={5} borderRadius={20} outerShadowBlur={4}>
+          <Image
           style={{
             pointerEvents: 'none',
           }}
