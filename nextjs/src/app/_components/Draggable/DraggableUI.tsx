@@ -1,9 +1,11 @@
 "use client";
 
-import { Rnd } from "react-rnd";
-import { GlassMorphism } from "liquid-glass-react";
+import { useActiveCameras } from "~/app/_context/ActiveCamerasContext";
+import CameraImage from "./CameraImage";
 
 export default function DraggableUI() {
+  const { activeCameras } = useActiveCameras();
+
   return (
     <div
       style={{
@@ -15,28 +17,16 @@ export default function DraggableUI() {
         pointerEvents: 'none'
       }}
     >
-      <Rnd
-        style={{
-            pointerEvents: 'auto',
-            display: 'flex',
-            flexDirection: 'column'
-        }}
-
-        // minWidth={200}
-        // minHeight={50}
-        bounds="parent"
-        lockAspectRatio
-        enableResizing={false}
-      >
-        <GlassMorphism tintColor="#Ffffff" tintOpacity={.1} shadowColor="#fff5"
-          shadowBlur={10} shadowSpread={5} borderRadius={20} outerShadowBlur={4} >
-          <div >
-              <h2>Draggable Panel</h2>
-              <p>This is a UI panel that you can move around and resize.</p>
-              <p>You can put your controls and information here.</p>
-          </div>
-        </GlassMorphism>
-      </Rnd>
+      {activeCameras.map((camera) =>
+        camera.imageUrl ? (
+          <CameraImage
+            key={camera.camera_id}
+            imageUrl={camera.imageUrl}
+            screenX={camera.screenX}
+            screenY={camera.screenY}
+          />
+        ) : null
+      )}
     </div>
   );
 } 
