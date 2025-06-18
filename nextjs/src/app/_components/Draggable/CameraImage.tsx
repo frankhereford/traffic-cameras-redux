@@ -20,6 +20,7 @@ export default function CameraImage({
     x: screenX || 0,
     y: screenY || 0,
   });
+  const [size, setSize] = useState({ width: 320, height: 240 });
 
   useEffect(() => {
     if (screenX !== undefined && screenY !== undefined) {
@@ -36,11 +37,18 @@ export default function CameraImage({
       }}
       bounds="parent"
       lockAspectRatio
-      enableResizing={false}
+      enableResizing
       position={position}
-      size={{ width: 320, height: 240 }}
+      size={{ width: size.width, height: size.height }}
       onDragStop={(e, d) => {
         setPosition({ x: d.x, y: d.y });
+      }}
+      onResizeStop={(e, direction, ref, delta, position) => {
+        setSize({
+          width: ref.offsetWidth,
+          height: ref.offsetHeight,
+        });
+        setPosition(position);
       }}
     >
       <GlassMorphism tintColor="#Ffffff" tintOpacity={.1} shadowColor="#fff5"
@@ -51,8 +59,8 @@ export default function CameraImage({
           }}
           src={imageUrl}
           alt="Traffic camera"
-          width={320}
-          height={240}
+          width={size.width}
+          height={size.height}
         />
       </GlassMorphism>
     </Rnd>
