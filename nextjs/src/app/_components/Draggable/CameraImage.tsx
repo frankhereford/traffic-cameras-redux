@@ -20,7 +20,7 @@ export default function CameraImage({
     x: screenX || 0,
     y: screenY || 0,
   });
-  const [size, setSize] = useState({ width: 480 , height: 270  });
+  const [size, setSize] = useState({ width: 480 , height: 270 + 20 });
 
   useEffect(() => {
     if (screenX !== undefined && screenY !== undefined) {
