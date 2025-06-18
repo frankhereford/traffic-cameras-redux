@@ -44,10 +44,10 @@ export default function CameraImage({
         setPosition({ x: d.x, y: d.y });
       }}
       onResizeStop={(e, direction, ref, delta, position) => {
-        setSize({
-          width: ref.offsetWidth,
-          height: ref.offsetHeight,
-        });
+        setSize(size => ({
+          width: size.width + delta.width,
+          height: size.height + delta.height,
+        }));
         setPosition(position);
       }}
     >
