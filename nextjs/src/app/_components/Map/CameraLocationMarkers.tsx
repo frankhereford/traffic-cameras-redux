@@ -18,7 +18,7 @@ interface CameraLocationMarkersProps {
   bounds?: LatLngBoundsLiteral;
 }
 
-const MAX_ACTIVE_CAMERAS = 10;
+const MAX_ACTIVE_CAMERAS = 4;
 
 const getMarkerAttributes = (zoom: number) => {
   if (zoom < 10) return { scale: 8 };

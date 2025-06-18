@@ -19,7 +19,12 @@ export default function DraggableUI() {
     >
       {activeCameras.map((camera) =>
         camera.imageUrl ? (
-          <CameraImage key={camera.camera_id} imageUrl={camera.imageUrl} />
+          <CameraImage
+            key={camera.camera_id}
+            imageUrl={camera.imageUrl}
+            screenX={camera.screenX}
+            screenY={camera.screenY}
+          />
         ) : null
       )}
     </div>

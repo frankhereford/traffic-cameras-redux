@@ -6,9 +6,15 @@ import Image from "next/image";
 
 interface CameraImageProps {
   imageUrl: string;
+  screenX?: number;
+  screenY?: number;
 }
 
-export default function CameraImage({ imageUrl }: CameraImageProps) {
+export default function CameraImage({
+  imageUrl,
+  screenX,
+  screenY,
+}: CameraImageProps) {
   return (
     <Rnd
       style={{
@@ -19,6 +25,11 @@ export default function CameraImage({ imageUrl }: CameraImageProps) {
       bounds="parent"
       lockAspectRatio
       enableResizing={false}
+      position={
+        screenX !== undefined && screenY !== undefined
+          ? { x: screenX, y: screenY }
+          : undefined
+      }
     >
       <GlassMorphism tintColor="#Ffffff" tintOpacity={.1} shadowColor="#fff5"
         shadowBlur={10} shadowSpread={5} borderRadius={20} outerShadowBlur={4} >
