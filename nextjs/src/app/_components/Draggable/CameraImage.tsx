@@ -3,6 +3,7 @@
 import { Rnd } from "react-rnd";
 import { GlassMorphism } from "liquid-glass-react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 interface CameraImageProps {
   imageUrl: string;
@@ -15,6 +16,17 @@ export default function CameraImage({
   screenX,
   screenY,
 }: CameraImageProps) {
+  const [position, setPosition] = useState({
+    x: screenX || 0,
+    y: screenY || 0,
+  });
+
+  useEffect(() => {
+    if (screenX !== undefined && screenY !== undefined) {
+      setPosition({ x: screenX, y: screenY });
+    }
+  }, [screenX, screenY]);
+
   return (
     <Rnd
       style={{
@@ -25,11 +37,11 @@ export default function CameraImage({
       bounds="parent"
       lockAspectRatio
       enableResizing={false}
-      position={
-        screenX !== undefined && screenY !== undefined
-          ? { x: screenX, y: screenY }
-          : undefined
-      }
+      position={position}
+      size={{ width: 320, height: 240 }}
+      onDragStop={(e, d) => {
+        setPosition({ x: d.x, y: d.y });
+      }}
     >
       <GlassMorphism tintColor="#Ffffff" tintOpacity={.1} shadowColor="#fff5"
         shadowBlur={10} shadowSpread={5} borderRadius={20} outerShadowBlur={4} >
