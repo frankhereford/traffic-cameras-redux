@@ -66,6 +66,9 @@ export default function CameraLocationMarkers({
       const projection = projectionRef.current;
       if (!projection) return;
 
+      const mapDiv = map.getDiv();
+      const mapBounds = mapDiv.getBoundingClientRect();
+
       setActiveCameras((prev) => {
         let hasChanges = false;
         const newActiveCameras = prev.map((activeCamera) => {
@@ -79,17 +82,20 @@ export default function CameraLocationMarkers({
             new google.maps.LatLng(pos),
           );
 
-          if (
-            point &&
-            (point.x !== activeCamera.screenX ||
-              point.y !== activeCamera.screenY)
-          ) {
-            hasChanges = true;
-            return {
-              ...activeCamera,
-              screenX: point.x,
-              screenY: point.y,
-            };
+          if (point) {
+            const screenX = point.x + mapBounds.left + mapBounds.width / 2;
+            const screenY = point.y + mapBounds.top + mapBounds.height / 2;
+            if (
+              screenX !== activeCamera.screenX ||
+              screenY !== activeCamera.screenY
+            ) {
+              hasChanges = true;
+              return {
+                ...activeCamera,
+                screenX,
+                screenY,
+              };
+            }
           }
           return activeCamera;
         });
