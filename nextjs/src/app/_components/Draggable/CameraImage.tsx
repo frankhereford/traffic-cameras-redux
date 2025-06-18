@@ -56,6 +56,7 @@ export default function CameraImage({
           <Image
           style={{
             pointerEvents: 'none',
+            opacity: 0.93,
           }}
           src={imageUrl}
           alt="Traffic camera"

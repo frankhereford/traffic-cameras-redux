@@ -1,9 +1,11 @@
 import type { SocrataData } from "~/app/_hooks/useSocrataData";
 import { AdvancedMarker, useMap } from "@vis.gl/react-google-maps";
-import { useMemo, useEffect, useRef } from "react";
+import { useMemo, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { env } from "~/env";
 import { useActiveCameras, type ActiveCamera } from "~/app/_context/ActiveCamerasContext";
+import { useScreenPositionTracking } from "~/app/_hooks/useScreenPositionTracking";
+import { useCameraStatusMap } from "~/app/_hooks/useCameraStatusMap";
 
 export interface LatLngBoundsLiteral {
   north: number;
@@ -34,102 +36,16 @@ export default function CameraLocationMarkers({
   bounds,
 }: CameraLocationMarkersProps) {
   const map = useMap();
-  const { data: allCameras } = api.camera.getAllCameras.useQuery();
   const { scale } = useMemo(() => getMarkerAttributes(zoom), [zoom]);
   const { activeCameras, setActiveCameras } = useActiveCameras();
-  const projectionRef = useRef<google.maps.MapCanvasProjection | null>(null);
-
-  useEffect(() => {
-    if (!map) return;
-    const overlay = new google.maps.OverlayView();
-    overlay.onAdd = () => {
-      // no-op
-    };
-    overlay.draw = function () {
-      if (!projectionRef.current) {
-        projectionRef.current = this.getProjection();
-      }
-    };
-    overlay.onRemove = () => {
-      projectionRef.current = null;
-    };
-    overlay.setMap(map);
-    return () => {
-      overlay.setMap(null);
-    };
-  }, [map]);
-
-  useEffect(() => {
-    if (!map) return;
-
-    const onIdle = () => {
-      const projection = projectionRef.current;
-      if (!projection) return;
-
-      const mapDiv = map.getDiv();
-      const mapBounds = mapDiv.getBoundingClientRect();
-
-      setActiveCameras((prev) => {
-        let hasChanges = false;
-        const newActiveCameras = prev.map((activeCamera) => {
-          if (!activeCamera.location?.coordinates) return activeCamera;
-          const pos = {
-            lat: activeCamera.location.coordinates[1]!,
-            lng: activeCamera.location.coordinates[0]!,
-          };
-
-          const point = projection.fromLatLngToDivPixel(
-            new google.maps.LatLng(pos),
-          );
-
-          if (point) {
-            const screenX = point.x + mapBounds.left + mapBounds.width / 2;
-            const screenY = point.y + mapBounds.top + mapBounds.height / 2;
-            if (
-              screenX !== activeCamera.screenX ||
-              screenY !== activeCamera.screenY
-            ) {
-              hasChanges = true;
-              return {
-                ...activeCamera,
-                screenX,
-                screenY,
-              };
-            }
-          }
-          return activeCamera;
-        });
-
-        return hasChanges ? newActiveCameras : prev;
-      });
-    };
-
-    const idleListener = map.addListener("idle", onIdle);
-    return () => {
-      google.maps.event.removeListener(idleListener);
-    };
-  }, [map, setActiveCameras]);
+  const { cameraStatusMap, getStatusColor, isCameraActive } = useCameraStatusMap();
+  
+  // Handle screen position tracking for active cameras
+  useScreenPositionTracking();
 
   useEffect(() => {
     console.log("Active cameras list changed:", activeCameras);
   }, [activeCameras]);
-
-  const cameraStatusMap = useMemo(() => {
-    if (!allCameras) return new Map<number, string>();
-    return new Map<number, string>(
-      allCameras.map((camera) => [
-        camera.coaId,
-        camera.status?.name ?? "Unknown",
-      ]),
-    );
-  }, [allCameras]);
-
-  const getStatusColor = (camera_id: string) => {
-    const status = cameraStatusMap.get(parseInt(camera_id, 10));
-    if (!status) return "grey";
-    if (status === "200") return "green";
-    return "red";
-  };
 
   const getJwtMutation = api.camera.getJwt.useMutation({
     onSuccess: (data, variables) => {
@@ -201,10 +117,7 @@ export default function CameraLocationMarkers({
             (camera) =>
               !newActiveCameras.some((c) => c.camera_id === camera.camera_id),
           )
-          .filter((camera) => {
-            const status = cameraStatusMap.get(parseInt(camera.camera_id, 10));
-            return status === "200";
-          });
+          .filter((camera) => isCameraActive(camera.camera_id));
 
         // Shuffle for random selection
         for (let i = potentialCameras.length - 1; i > 0; i--) {
@@ -236,7 +149,7 @@ export default function CameraLocationMarkers({
 
       return newActiveCameras;
     });
-  }, [bounds, socrataData, cameraStatusMap, getJwtMutation.mutate]);
+  }, [bounds, socrataData, isCameraActive, getJwtMutation.mutate]);
 
   return (
     <>
@@ -267,4 +180,4 @@ export default function CameraLocationMarkers({
       })}
     </>
   );
-} 
+}
