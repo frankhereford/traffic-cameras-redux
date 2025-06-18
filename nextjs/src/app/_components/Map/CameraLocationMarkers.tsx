@@ -184,7 +184,6 @@ export default function CameraLocationMarkers({
           (c) => c.camera_id === camera.camera_id,
         );
         if (!isVisible && camera.imageUrl) {
-          // No longer using blob URLs, so no need to revoke
         }
         return isVisible;
       });
