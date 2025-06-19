@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+import { useCamerasStore } from './cameras'
+import type { SocrataData } from '~/app/_hooks/useSocrataData'
 
 interface LatLngBounds {
   north: number
@@ -18,11 +20,12 @@ interface MapActions {
   setCenter: (center: { lat: number; lng: number }) => void
   setBounds: (bounds: LatLngBounds) => void
   updateMapState: (zoom: number, center: { lat: number; lng: number }, bounds: LatLngBounds) => void
+  getCamerasInBounds: () => SocrataData[]
 }
 
 type MapStore = MapState & MapActions
 
-export const useMapStore = create<MapStore>((set) => ({
+export const useMapStore = create<MapStore>((set, get) => ({
   zoom: 17,
   center: { lat: 30.262531, lng: -97.753983 },
   bounds: null,
@@ -30,4 +33,29 @@ export const useMapStore = create<MapStore>((set) => ({
   setCenter: (center) => set({ center }),
   setBounds: (bounds) => set({ bounds }),
   updateMapState: (zoom, center, bounds) => set({ zoom, center, bounds }),
+  getCamerasInBounds: () => {
+    const mapState = get()
+    const camerasState = useCamerasStore.getState()
+    
+    if (!mapState.bounds || !camerasState.allCameras.length) {
+      return []
+    }
+    
+    return camerasState.allCameras.filter(camera => {
+      if (!camera.location?.coordinates || camera.location.coordinates.length < 2) {
+        return false
+      }
+      
+      const [lng, lat] = camera.location.coordinates
+      
+      if (typeof lat !== 'number' || typeof lng !== 'number') {
+        return false
+      }
+      
+      return lat >= mapState.bounds!.south && 
+             lat <= mapState.bounds!.north && 
+             lng >= mapState.bounds!.west && 
+             lng <= mapState.bounds!.east
+    })
+  },
 })) 
