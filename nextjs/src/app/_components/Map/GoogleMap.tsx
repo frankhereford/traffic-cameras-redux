@@ -17,7 +17,7 @@ interface MapViewProps {
   socrataData: SocrataData[];
 }
 
-function MapView({ socrataData }: MapViewProps) {
+function GoogleMap({ socrataData }: MapViewProps) {
   const [zoom, setZoom] = useState(17);
 
   const position = { lat: 30.262531, lng: -97.753983 };
@@ -40,4 +40,4 @@ function MapView({ socrataData }: MapViewProps) {
   );
 }
 
-export default MapView;
+export default GoogleMap;
