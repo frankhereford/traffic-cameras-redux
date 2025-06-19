@@ -13,10 +13,10 @@ function CameraMarkers({ onMarkerClick }: CameraMarkersProps) {
   
   console.log('CameraMarkers: getCamerasInBounds', getCamerasInBounds());
   
-  // Get active cameras (cameras within current map bounds)
-  const activeCameras = useMemo(() => {
-    return [];
-  }, []);
+//   // Get active cameras (cameras within current map bounds)
+//   const activeCameras = useMemo(() => {
+//     return getCamerasInBounds();
+//   }, [getCamerasInBounds]);
 
   // Handle marker click
   const handleMarkerClick = (camera: any) => {
@@ -33,17 +33,14 @@ function CameraMarkers({ onMarkerClick }: CameraMarkersProps) {
     });
   };
 
-  // Don't render anything if no active cameras
-  if (!activeCameras.length) {
-    console.log('CameraMarkers: No active cameras to render');
-    return null;
-  }
 
-  console.log(`CameraMarkers: Rendering ${activeCameras.length} camera markers`);
+
+//   console.log('CameraMarkers: activeCameras', activeCameras);
+//   console.log(`CameraMarkers: Rendering ${activeCameras.length} camera markers`);
 
   return (
     <>
-      {activeCameras.map((camera) => {
+      {getCamerasInBounds().map((camera) => {
         // Extract coordinates from camera data
         const coordinates = camera.location?.coordinates;
         
