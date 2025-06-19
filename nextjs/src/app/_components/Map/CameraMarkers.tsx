@@ -1,7 +1,8 @@
 "use client";
 
-import { AdvancedMarker, Pin } from "@vis.gl/react-google-maps";
+import { AdvancedMarker, Pin, useMap } from "@vis.gl/react-google-maps";
 import { useMapStore } from "~/app/_stores/map";
+import { useEffect, useRef } from "react";
 
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -11,15 +12,17 @@ interface CameraMarkersProps {
 }
 
 function CameraMarkers({ onMarkerClick }: CameraMarkersProps) {
+  const map = useMap();
   const { getCamerasInBounds } = useMapStore();
+  const projectionRef = useRef<google.maps.MapCanvasProjection | null>(null);
   
   
   const { data: workingCameras } = api.camera.getWorkingCameras.useQuery();
   const { data: potentialCameras } = api.camera.getPotentialCameras.useQuery();
 
-  console.debug('CameraMarkers: getCamerasInBounds', getCamerasInBounds());
-  console.debug('CameraMarkers: workingCameras', workingCameras);
-  console.debug('CameraMarkers: potentialCameras', potentialCameras);
+  // console.debug('CameraMarkers: getCamerasInBounds', getCamerasInBounds());
+  // console.debug('CameraMarkers: workingCameras', workingCameras);
+  // console.debug('CameraMarkers: potentialCameras', potentialCameras);
 
   // Create Sets of camera IDs for efficient lookup
   const workingCameraIds = new Set(
@@ -28,6 +31,30 @@ function CameraMarkers({ onMarkerClick }: CameraMarkersProps) {
   const potentialCameraIds = new Set(
     potentialCameras?.map(camera => camera.coaId.toString()) || []
   );
+
+  // Set up Google Maps OverlayView to get access to map projection
+  useEffect(() => {
+    if (!map) return;
+    
+    const overlay = new google.maps.OverlayView();
+    overlay.onAdd = () => {
+      // no-op - we don't need to add any DOM elements
+    };
+    overlay.draw = function () {
+      // Store the projection for use in position calculations
+      if (!projectionRef.current) {
+        projectionRef.current = this.getProjection();
+      }
+    };
+    overlay.onRemove = () => {
+      projectionRef.current = null;
+    };
+    overlay.setMap(map);
+    
+    return () => {
+      overlay.setMap(null);
+    };
+  }, [map]);
 
   // Handle marker click
   const handleMarkerClick = (camera: any) => {
@@ -106,10 +133,35 @@ function CameraMarkers({ onMarkerClick }: CameraMarkersProps) {
           return null;
         }
 
+        // Calculate screen coordinates
+        const projection = projectionRef.current;
+        if (projection) {
+          const mapDiv = map?.getDiv();
+          if (mapDiv) {
+            const mapBounds = mapDiv.getBoundingClientRect();
+            const point = projection.fromLatLngToDivPixel(
+              new google.maps.LatLng(lat, lng)
+            );
+            
+            if (point) {
+              const screenX = point.x + mapBounds.left + mapBounds.width / 2;
+              const screenY = point.y + mapBounds.top + mapBounds.height / 2;
+              
+              console.log('📍 Camera screen position:', {
+                cameraId: camera.camera_id,
+                locationName: camera.location_name,
+                latLng: { lat, lng },
+                screenPosition: { x: screenX, y: screenY },
+                timestamp: new Date().toISOString()
+              });
+            }
+          }
+        }
+
         const colors = getMarkerColors(camera.camera_id);
         const statusText = getCameraStatusText(camera.camera_id);
 
-        console.debug(`CameraMarkers: Rendering marker for camera ${camera.camera_id} at ${lat}, ${lng} (status: ${statusText})`);
+        // console.debug(`CameraMarkers: Rendering marker for camera ${camera.camera_id} at ${lat}, ${lng} (status: ${statusText})`);
 
         return (
           <AdvancedMarker
