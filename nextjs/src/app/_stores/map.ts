@@ -30,19 +30,19 @@ export const useMapStore = create<MapStore>((set, get) => ({
   center: { lat: 30.262531, lng: -97.753983 },
   bounds: null,
   setZoom: (zoom) => {
-    console.log('[MapStore] Setting zoom:', zoom)
+    console.debug('[MapStore] Setting zoom:', zoom)
     set({ zoom })
   },
   setCenter: (center) => {
-    console.log('[MapStore] Setting center:', center)
+    console.debug('[MapStore] Setting center:', center)
     set({ center })
   },
   setBounds: (bounds) => {
-    console.log('[MapStore] Setting bounds:', bounds)
+    console.debug('[MapStore] Setting bounds:', bounds)
     set({ bounds })
   },
   updateMapState: (zoom, center, bounds) => {
-    console.log('[MapStore] Updating map state:', { zoom, center, bounds })
+    console.debug('[MapStore] Updating map state:', { zoom, center, bounds })
     set({ zoom, center, bounds })
   },
   getCamerasInBounds: () => {
@@ -70,7 +70,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
              lng <= mapState.bounds!.east
     })
     
-    console.log('[MapStore] Cameras in bounds:', camerasInBounds.length)
+    console.debug('[MapStore] Cameras in bounds:', camerasInBounds.length)
     return camerasInBounds
   },
 })) 

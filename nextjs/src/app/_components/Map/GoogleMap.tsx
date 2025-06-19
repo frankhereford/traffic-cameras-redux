@@ -42,7 +42,7 @@ function GoogleMap({ socrataData }: MapViewProps) {
       };
       
       // Log map extents changes
-      console.log('Map extents changed:', {
+      console.debug('Map extents changed:', {
         zoom,
         center,
         bounds: boundsData,

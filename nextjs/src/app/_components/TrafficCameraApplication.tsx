@@ -10,7 +10,7 @@ export default function TrafficCameraApplication() {
 
   // Console log active cameras whenever the component renders
   const activeCameras = getCamerasInBounds();
-  console.info('Active cameras:', activeCameras);
+  console.debug('Active cameras:', activeCameras);
 
   return (
     <>
