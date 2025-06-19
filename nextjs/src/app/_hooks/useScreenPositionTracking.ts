@@ -79,7 +79,6 @@ export function useScreenPositionTracking() {
               // Add this console log to track when positions update
               console.log('📍 Camera position updated:', {
                 cameraId: activeCamera.id,
-                cameraName: activeCamera.name,
                 oldPosition: { x: activeCamera.screenX, y: activeCamera.screenY },
                 newPosition: { x: screenX, y: screenY },
                 delta: { 
