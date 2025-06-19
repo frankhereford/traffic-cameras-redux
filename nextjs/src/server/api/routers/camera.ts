@@ -54,4 +54,16 @@ export const cameraRouter = createTRPCRouter({
       },
     });
   }),
+  getWorkingCameras: publicProcedure.query(({ ctx }) => {
+    return ctx.db.camera.findMany({
+      where: {
+        status: {
+          name: "200",
+        },
+      },
+      include: {
+        status: true,
+      },
+    });
+  }),
 }); 
