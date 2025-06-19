@@ -11,6 +11,7 @@ export function useScreenPositionTracking() {
   const map = useMap();
   const { setActiveCameras } = useActiveCameras();
   const projectionRef = useRef<google.maps.MapCanvasProjection | null>(null);
+  const rafIdRef = useRef<number | null>(null);
 
   // Set up Google Maps OverlayView to get access to map projection
   useEffect(() => {
@@ -40,11 +41,11 @@ export function useScreenPositionTracking() {
     };
   }, [map]);
 
-  // Listen to map idle events and update screen positions
+  // Listen to map bounds_changed events and update screen positions continuously
   useEffect(() => {
     if (!map) return;
 
-    const onIdle = () => {
+    const updatePositions = () => {
       const projection = projectionRef.current;
       if (!projection) return;
 
@@ -88,10 +89,23 @@ export function useScreenPositionTracking() {
       });
     };
 
-    const idleListener = map.addListener("idle", onIdle);
+    const onBoundsChanged = () => {
+      // Cancel any pending animation frame
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+      
+      // Use requestAnimationFrame for smooth updates
+      rafIdRef.current = requestAnimationFrame(updatePositions);
+    };
+
+    const boundsChangedListener = map.addListener("bounds_changed", onBoundsChanged);
     
     return () => {
-      google.maps.event.removeListener(idleListener);
+      google.maps.event.removeListener(boundsChangedListener);
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
     };
   }, [map, setActiveCameras]);
 } 
