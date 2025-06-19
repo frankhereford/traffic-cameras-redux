@@ -99,6 +99,32 @@ export default function DraggableUI() {
         pointerEvents: 'none'
       }}
     >
+      <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0 }}>
+        {positionedCameras.map((camera) => {
+          if (camera.screenX === undefined || camera.screenY === undefined) {
+            return null;
+          }
+
+          const x1 = camera.screenX;
+          const y1 = camera.screenY;
+
+          const isLeftColumn = camera.x < windowSize.width / 2;
+          const x2 = isLeftColumn ? camera.x + IMAGE_WIDTH : camera.x;
+          const y2 = camera.y + IMAGE_HEIGHT / 2;
+
+          return (
+            <line
+              key={`line-${camera.camera_id}`}
+              x1={x1}
+              y1={y1}
+              x2={x2}
+              y2={y2}
+              stroke="red"
+              strokeWidth="2"
+            />
+          );
+        })}
+      </svg>
       {positionedCameras.map((camera) => (
         <CameraImage
           key={camera.camera_id}
