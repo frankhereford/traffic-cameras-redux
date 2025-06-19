@@ -7,6 +7,7 @@ import {
 import type { SocrataData } from "~/app/_hooks/useSocrataData";
 // import CameraLocationMarkers, { type LatLngBoundsLiteral } from "./CameraLocationMarkers";
 import { useState } from "react";
+import { useCamerasStore } from "~/app/_stores/cameras";
 
 const containerStyle = {
   width: "100vw",
@@ -19,6 +20,7 @@ interface MapViewProps {
 
 function GoogleMap({ socrataData }: MapViewProps) {
   const [zoom, setZoom] = useState(17);
+  const camerasStore = useCamerasStore();
 
   const position = { lat: 30.262531, lng: -97.753983 };
 
