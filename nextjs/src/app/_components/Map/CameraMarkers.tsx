@@ -3,22 +3,23 @@
 import { AdvancedMarker, Pin } from "@vis.gl/react-google-maps";
 import { useMapStore } from "~/app/_stores/map";
 import { useMemo } from "react";
-import type { SocrataData } from "~/app/_hooks/useSocrataData";
 
 interface CameraMarkersProps {
-  onMarkerClick?: (camera: SocrataData) => void;
+  onMarkerClick?: (camera: any) => void;
 }
 
 function CameraMarkers({ onMarkerClick }: CameraMarkersProps) {
   const { getCamerasInBounds } = useMapStore();
   
+  console.log('CameraMarkers: getCamerasInBounds', getCamerasInBounds());
+  
   // Get active cameras (cameras within current map bounds)
   const activeCameras = useMemo(() => {
-    return getCamerasInBounds();
-  }, [getCamerasInBounds]);
+    return [];
+  }, []);
 
   // Handle marker click
-  const handleMarkerClick = (camera: SocrataData) => {
+  const handleMarkerClick = (camera: any) => {
     if (onMarkerClick) {
       onMarkerClick(camera);
     }
