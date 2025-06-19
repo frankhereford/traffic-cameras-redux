@@ -1,15 +1,17 @@
 import { create } from 'zustand'
+import type { SocrataData } from '~/app/_hooks/useSocrataData'
 
 interface CamerasState {
-  // Empty state for now
+  allCameras: SocrataData[]
 }
 
 interface CamerasActions {
-  // Empty actions for now
+  setAllCameras: (cameras: SocrataData[]) => void
 }
 
 type CamerasStore = CamerasState & CamerasActions
 
 export const useCamerasStore = create<CamerasStore>((set, get) => ({
-  // Empty implementation for now
+  allCameras: [],
+  setAllCameras: (cameras) => set({ allCameras: cameras }),
 })) 
