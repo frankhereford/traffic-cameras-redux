@@ -5,6 +5,7 @@ import {
   Map,
 } from "@vis.gl/react-google-maps";
 import type { SocrataData } from "~/app/_hooks/useSocrataData";
+import CameraMarkers from "./CameraMarkers";
 // import CameraLocationMarkers, { type LatLngBoundsLiteral } from "./CameraLocationMarkers";
 import { useEffect, useCallback } from "react";
 import { useCamerasStore } from "~/app/_stores/cameras";
@@ -53,6 +54,12 @@ function GoogleMap({ socrataData }: MapViewProps) {
     }
   }, [updateMapState]);
 
+  // Handle camera marker click
+  const handleCameraClick = useCallback((camera: SocrataData) => {
+    console.debug('Camera clicked:', camera.location_name);
+    // TODO: Add any additional camera click handling logic here
+  }, []);
+
   return (
     <APIProvider
       apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY ?? ""}
@@ -65,7 +72,9 @@ function GoogleMap({ socrataData }: MapViewProps) {
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID ?? "Traffic-Cameras"}
           mapTypeId="satellite"
           onCameraChanged={handleCameraChanged}
-        />
+        >
+          <CameraMarkers onMarkerClick={handleCameraClick} />
+        </Map>
       </div>
     </APIProvider>
   );
