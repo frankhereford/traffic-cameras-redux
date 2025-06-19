@@ -3,13 +3,13 @@
 import {
   APIProvider,
   Map,
-  useMap,
 } from "@vis.gl/react-google-maps";
 import type { SocrataData } from "~/app/_hooks/useSocrataData";
 // import CameraLocationMarkers, { type LatLngBoundsLiteral } from "./CameraLocationMarkers";
-import { useEffect, useRef } from "react";
+import { useEffect, useCallback } from "react";
 import { useCamerasStore } from "~/app/_stores/cameras";
 import { useMapStore } from "~/app/_stores/map";
+import type { MapCameraChangedEvent } from "@vis.gl/react-google-maps";
 
 const containerStyle = {
   width: "100vw",
@@ -20,56 +20,38 @@ interface MapViewProps {
   socrataData: SocrataData[];
 }
 
-// Component to handle map events and update store
-function MapEventHandler() {
-  const map = useMap();
-  const { updateMapState } = useMapStore();
-  const listenerRef = useRef<google.maps.MapsEventListener | null>(null);
-
-  useEffect(() => {
-    if (!map) return;
-
-    const updateStore = () => {
-      const zoom = map.getZoom() || 17;
-      const center = map.getCenter();
-      const bounds = map.getBounds();
-      
-      if (center && bounds) {
-        const boundsData = {
-          north: bounds.getNorthEast().lat(),
-          south: bounds.getSouthWest().lat(),
-          east: bounds.getNorthEast().lng(),
-          west: bounds.getSouthWest().lng(),
-        };
-        
-        updateMapState(zoom, { lat: center.lat(), lng: center.lng() }, boundsData);
-      }
-    };
-
-    // Add listener for camera changes
-    listenerRef.current = map.addListener('camera_changed', updateStore);
-
-    // Initial update
-    updateStore();
-
-    return () => {
-      if (listenerRef.current) {
-        google.maps.event.removeListener(listenerRef.current);
-      }
-    };
-  }, [map, updateMapState]);
-
-  return null;
-}
-
 function GoogleMap({ socrataData }: MapViewProps) {
   const { setAllCameras } = useCamerasStore();
-  const { zoom, center } = useMapStore();
+  const { zoom, center, updateMapState } = useMapStore();
 
   // Update store when socrataData changes
   useEffect(() => {
     setAllCameras(socrataData);
   }, [socrataData, setAllCameras]);
+
+  // Handle camera changes using React event handler
+  const handleCameraChanged = useCallback((ev: MapCameraChangedEvent) => {
+    const { zoom, center, bounds } = ev.detail;
+    
+    if (center && bounds) {
+      const boundsData = {
+        north: bounds.north,
+        south: bounds.south,
+        east: bounds.east,
+        west: bounds.west,
+      };
+      
+      // Log map extents changes
+      console.log('Map extents changed:', {
+        zoom,
+        center,
+        bounds: boundsData,
+        timestamp: new Date().toISOString()
+      });
+      
+      updateMapState(zoom, center, boundsData);
+    }
+  }, [updateMapState]);
 
   return (
     <APIProvider
@@ -82,9 +64,8 @@ function GoogleMap({ socrataData }: MapViewProps) {
           tilt={0}
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID ?? "Traffic-Cameras"}
           mapTypeId="satellite"
-        >
-          <MapEventHandler />
-        </Map>
+          onCameraChanged={handleCameraChanged}
+        />
       </div>
     </APIProvider>
   );

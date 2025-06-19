@@ -13,5 +13,9 @@ type CamerasStore = CamerasState & CamerasActions
 
 export const useCamerasStore = create<CamerasStore>((set, get) => ({
   allCameras: [],
-  setAllCameras: (cameras) => set({ allCameras: cameras }),
+  setAllCameras: (cameras) => {
+    console.log('[CamerasStore] Setting cameras:', cameras.length, 'cameras')
+    console.log('[CamerasStore] Camera data sample:', cameras.slice(0, 2))
+    set({ allCameras: cameras })
+  },
 })) 

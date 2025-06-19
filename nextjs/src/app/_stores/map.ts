@@ -29,10 +29,22 @@ export const useMapStore = create<MapStore>((set, get) => ({
   zoom: 17,
   center: { lat: 30.262531, lng: -97.753983 },
   bounds: null,
-  setZoom: (zoom) => set({ zoom }),
-  setCenter: (center) => set({ center }),
-  setBounds: (bounds) => set({ bounds }),
-  updateMapState: (zoom, center, bounds) => set({ zoom, center, bounds }),
+  setZoom: (zoom) => {
+    console.log('[MapStore] Setting zoom:', zoom)
+    set({ zoom })
+  },
+  setCenter: (center) => {
+    console.log('[MapStore] Setting center:', center)
+    set({ center })
+  },
+  setBounds: (bounds) => {
+    console.log('[MapStore] Setting bounds:', bounds)
+    set({ bounds })
+  },
+  updateMapState: (zoom, center, bounds) => {
+    console.log('[MapStore] Updating map state:', { zoom, center, bounds })
+    set({ zoom, center, bounds })
+  },
   getCamerasInBounds: () => {
     const mapState = get()
     const camerasState = useCamerasStore.getState()
@@ -41,7 +53,7 @@ export const useMapStore = create<MapStore>((set, get) => ({
       return []
     }
     
-    return camerasState.allCameras.filter(camera => {
+    const camerasInBounds = camerasState.allCameras.filter(camera => {
       if (!camera.location?.coordinates || camera.location.coordinates.length < 2) {
         return false
       }
@@ -57,5 +69,8 @@ export const useMapStore = create<MapStore>((set, get) => ({
              lng >= mapState.bounds!.west && 
              lng <= mapState.bounds!.east
     })
+    
+    console.log('[MapStore] Cameras in bounds:', camerasInBounds.length)
+    return camerasInBounds
   },
 })) 
