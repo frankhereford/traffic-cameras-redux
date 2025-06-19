@@ -1,8 +1,8 @@
 "use client";
+
 import {
   APIProvider,
   Map,
-  type MapCameraChangedEvent,
 } from "@vis.gl/react-google-maps";
 import type { SocrataData } from "~/app/_hooks/useSocrataData";
 // import CameraLocationMarkers, { type LatLngBoundsLiteral } from "./CameraLocationMarkers";
@@ -34,7 +34,6 @@ function MapView({ socrataData }: MapViewProps) {
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID ?? "Traffic-Cameras"}
           mapTypeId="satellite"
         >
-
         </Map>
       </div>
     </APIProvider>
