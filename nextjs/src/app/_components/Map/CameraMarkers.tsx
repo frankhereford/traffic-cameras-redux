@@ -147,13 +147,13 @@ function CameraMarkers({ onMarkerClick }: CameraMarkersProps) {
               const screenX = point.x + mapBounds.left + mapBounds.width / 2;
               const screenY = point.y + mapBounds.top + mapBounds.height / 2;
               
-              console.log('📍 Camera screen position:', {
-                cameraId: camera.camera_id,
-                locationName: camera.location_name,
-                latLng: { lat, lng },
-                screenPosition: { x: screenX, y: screenY },
-                timestamp: new Date().toISOString()
-              });
+              // console.log('📍 Camera screen position:', {
+              //   cameraId: camera.camera_id,
+              //   locationName: camera.location_name,
+              //   latLng: { lat, lng },
+              //   screenPosition: { x: screenX, y: screenY },
+              //   timestamp: new Date().toISOString()
+              // });
             }
           }
         }
