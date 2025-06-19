@@ -6,6 +6,11 @@ import { useMapStore } from "~/app/_stores/map";
 
 export default function TrafficCameraApplication() {
   const { data: socrataData, isLoading, error } = useGetSocrataData();
+  const { getCamerasInBounds } = useMapStore();
+
+  // Console log active cameras whenever the component renders
+  const activeCameras = getCamerasInBounds();
+  console.info('Active cameras:', activeCameras);
 
   return (
     <>
