@@ -11,12 +11,9 @@ interface CameraMarkersProps {
 function CameraMarkers({ onMarkerClick }: CameraMarkersProps) {
   const { getCamerasInBounds } = useMapStore();
   
-  console.log('CameraMarkers: getCamerasInBounds', getCamerasInBounds());
+  console.debug('CameraMarkers: getCamerasInBounds', getCamerasInBounds());
   
-//   // Get active cameras (cameras within current map bounds)
-//   const activeCameras = useMemo(() => {
-//     return getCamerasInBounds();
-//   }, [getCamerasInBounds]);
+
 
   // Handle marker click
   const handleMarkerClick = (camera: any) => {
@@ -32,11 +29,6 @@ function CameraMarkers({ onMarkerClick }: CameraMarkersProps) {
       status: camera.camera_status
     });
   };
-
-
-
-//   console.log('CameraMarkers: activeCameras', activeCameras);
-//   console.log(`CameraMarkers: Rendering ${activeCameras.length} camera markers`);
 
   return (
     <>
@@ -58,7 +50,7 @@ function CameraMarkers({ onMarkerClick }: CameraMarkersProps) {
           return null;
         }
 
-        console.log(`CameraMarkers: Creating marker for camera ${camera.camera_id} at ${lat}, ${lng}`);
+        console.debug(`CameraMarkers: Creating marker for camera ${camera.camera_id} at ${lat}, ${lng}`);
 
         return (
           <AdvancedMarker

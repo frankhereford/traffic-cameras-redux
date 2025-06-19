@@ -24,12 +24,30 @@ export const cameraRouter = createTRPCRouter({
       },
     });
   }),
-  getWorkingCameras: publicProcedure.query(({ ctx }) => {
+  getPotentialCameras: publicProcedure.query(({ ctx }) => {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
     return ctx.db.camera.findMany({
       where: {
-        status: {
-          name: "200",
-        },
+        OR: [
+          // Cameras whose status is not 'unavailable'
+          {
+            status: {
+              name: {
+                not: "unavailable",
+              },
+            },
+          },
+          // Cameras whose status is 'unavailable' but updated within the last 24 hours
+          {
+            status: {
+              name: "unavailable",
+            },
+            updatedAt: {
+              gte: twentyFourHoursAgo,
+            },
+          },
+        ],
       },
       include: {
         status: true,
