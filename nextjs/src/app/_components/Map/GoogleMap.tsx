@@ -77,8 +77,8 @@ function GoogleMap({ socrataData }: MapViewProps) {
     >
       <div style={containerStyle}>
         <Map
-          zoom={zoom}
-          center={center}
+          defaultZoom={zoom}
+          defaultCenter={center}
           tilt={0}
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID ?? "Traffic-Cameras"}
           mapTypeId="satellite"
