@@ -5,7 +5,7 @@ import { useActiveCameras } from "~/app/_context/ActiveCamerasContext";
 import type { SocrataData } from "~/app/_hooks/useSocrataData";
 import type { LatLngBoundsLiteral } from "~/app/_components/Map/CameraLocationMarkers";
 
-const MAX_ACTIVE_CAMERAS = 4;
+const MAX_ACTIVE_CAMERAS = 8;
 
 interface UseActiveCameraManagerProps {
   socrataData: SocrataData[];

@@ -32,6 +32,10 @@ export default function DraggableUI() {
     return null;
   }
 
+  const maxImagesPerColumn = Math.floor(
+    (windowSize.height - COLUMN_PADDING * 2) / (IMAGE_HEIGHT + IMAGE_VERTICAL_PADDING)
+  );
+
   const camerasWithPosition = activeCameras.filter(
     (camera) =>
       camera.imageUrl &&
@@ -39,21 +43,44 @@ export default function DraggableUI() {
       camera.screenY !== undefined,
   );
 
-  const leftColumn = camerasWithPosition
+  const leftColumnPref = camerasWithPosition
     .filter((camera) => camera.screenX! < windowSize.width / 2)
     .sort((a, b) => a.screenY! - b.screenY!);
 
-  const rightColumn = camerasWithPosition
+  const rightColumnPref = camerasWithPosition
     .filter((camera) => camera.screenX! >= windowSize.width / 2)
     .sort((a, b) => a.screenY! - b.screenY!);
 
+  const finalLeftColumn = [];
+  const finalRightColumn = [];
+
+  while(leftColumnPref.length > 0 && finalLeftColumn.length < maxImagesPerColumn) {
+      finalLeftColumn.push(leftColumnPref.shift()!);
+  }
+
+  while(rightColumnPref.length > 0 && finalRightColumn.length < maxImagesPerColumn) {
+      finalRightColumn.push(rightColumnPref.shift()!);
+  }
+
+  const leftovers = [...leftColumnPref, ...rightColumnPref].sort((a, b) => a.screenY! - b.screenY!);
+
+  while(leftovers.length > 0) {
+      if (finalLeftColumn.length < maxImagesPerColumn) {
+          finalLeftColumn.push(leftovers.shift()!);
+      } else if (finalRightColumn.length < maxImagesPerColumn) {
+          finalRightColumn.push(leftovers.shift()!);
+      } else {
+          break; 
+      }
+  }
+
   const positionedCameras = [
-    ...leftColumn.map((camera, index) => ({
+    ...finalLeftColumn.map((camera, index) => ({
       ...camera,
       x: COLUMN_PADDING,
       y: COLUMN_PADDING + index * (IMAGE_HEIGHT + IMAGE_VERTICAL_PADDING),
     })),
-    ...rightColumn.map((camera, index) => ({
+    ...finalRightColumn.map((camera, index) => ({
       ...camera,
       x: windowSize.width - IMAGE_WIDTH - COLUMN_PADDING,
       y: COLUMN_PADDING + index * (IMAGE_HEIGHT + IMAGE_VERTICAL_PADDING),
