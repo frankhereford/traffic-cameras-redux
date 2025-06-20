@@ -113,71 +113,81 @@ function CameraMarkers({ onMarkerClick }: CameraMarkersProps) {
     }
   };
 
-  return (
-    <>
-      {getCamerasInBounds().map((camera) => {
-        // Extract coordinates from camera data
-        const coordinates = camera.location?.coordinates;
-        
-        // Skip cameras without valid coordinates
-        if (!coordinates || coordinates.length < 2) {
-          console.warn('Camera missing coordinates:', camera.camera_id);
-          return null;
-        }
+  const camerasToRender = getCamerasInBounds()
+    .map((camera) => {
+      // Extract coordinates from camera data
+      const coordinates = camera.location?.coordinates;
 
-        const [lng, lat] = coordinates;
-        
-        // Skip cameras with invalid coordinates
-        if (typeof lat !== 'number' || typeof lng !== 'number') {
-          console.warn('Camera has invalid coordinates:', camera.camera_id, coordinates);
-          return null;
-        }
+      // Skip cameras without valid coordinates
+      if (!coordinates || coordinates.length < 2) {
+        console.warn("Camera missing coordinates:", camera.camera_id);
+        return null;
+      }
 
-        // Calculate screen coordinates
-        const projection = projectionRef.current;
-        if (projection) {
-          const mapDiv = map?.getDiv();
-          if (mapDiv) {
-            const mapBounds = mapDiv.getBoundingClientRect();
-            const point = projection.fromLatLngToDivPixel(
-              new google.maps.LatLng(lat, lng)
-            );
-            
-            if (point) {
-              const screenX = point.x + mapBounds.left + mapBounds.width / 2;
-              const screenY = point.y + mapBounds.top + mapBounds.height / 2;
-              
-              // console.log('📍 Camera screen position:', {
-              //   cameraId: camera.camera_id,
-              //   locationName: camera.location_name,
-              //   latLng: { lat, lng },
-              //   screenPosition: { x: screenX, y: screenY },
-              //   timestamp: new Date().toISOString()
-              // });
-            }
+      const [lng, lat] = coordinates;
+
+      // Skip cameras with invalid coordinates
+      if (typeof lat !== "number" || typeof lng !== "number") {
+        console.warn(
+          "Camera has invalid coordinates:",
+          camera.camera_id,
+          coordinates,
+        );
+        return null;
+      }
+
+      // Calculate screen coordinates
+      const projection = projectionRef.current;
+      if (projection) {
+        const mapDiv = map?.getDiv();
+        if (mapDiv) {
+          const mapBounds = mapDiv.getBoundingClientRect();
+          const point = projection.fromLatLngToDivPixel(
+            new google.maps.LatLng(lat, lng),
+          );
+
+          if (point) {
+            // const screenX = point.x + mapBounds.left + mapBounds.width / 2;
+            // const screenY = point.y + mapBounds.top + mapBounds.height / 2;
+            // console.log('📍 Camera screen position:', {
+            //   cameraId: camera.camera_id,
+            //   locationName: camera.location_name,
+            //   latLng: { lat, lng },
+            //   screenPosition: { x: screenX, y: screenY },
+            //   timestamp: new Date().toISOString()
+            // });
           }
         }
+      }
 
-        const colors = getMarkerColors(camera.camera_id);
-        const statusText = getCameraStatusText(camera.camera_id);
+      const colors = getMarkerColors(camera.camera_id);
+      const statusText = getCameraStatusText(camera.camera_id);
 
-        // console.debug(`CameraMarkers: Rendering marker for camera ${camera.camera_id} at ${lat}, ${lng} (status: ${statusText})`);
+      return {
+        camera,
+        position: { lat, lng },
+        title: `${camera.location_name} (${statusText})`,
+        colors,
+      };
+    })
+    .filter((camera): camera is NonNullable<typeof camera> => !!camera);
 
-        return (
-          <AdvancedMarker
-            key={camera.camera_id}
-            position={{ lat, lng }}
-            title={`${camera.location_name} (${statusText})`}
-            onClick={() => handleMarkerClick(camera)}
-          >
-            <Pin
-              background={colors.background}
-              borderColor={colors.borderColor}
-              glyphColor={colors.glyphColor}
-            />
-          </AdvancedMarker>
-        );
-      })}
+  return (
+    <>
+      {camerasToRender.map(({ camera, position, title, colors }) => (
+        <AdvancedMarker
+          key={camera.camera_id}
+          position={position}
+          title={title}
+          onClick={() => handleMarkerClick(camera)}
+        >
+          <Pin
+            background={colors.background}
+            borderColor={colors.borderColor}
+            glyphColor={colors.glyphColor}
+          />
+        </AdvancedMarker>
+      ))}
     </>
   );
 }
