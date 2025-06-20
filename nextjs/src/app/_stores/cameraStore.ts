@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { SocrataData } from '~/app/_types/socrata';
 
-interface CameraState {
+export interface CameraState {
   cameras: SocrataData[];
   isLoading: boolean;
   error: Error | null;

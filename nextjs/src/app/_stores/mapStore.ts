@@ -25,7 +25,7 @@ interface MapActions {
   ) => void;
 }
 
-type MapStore = MapState & MapActions;
+export type MapStore = MapState & MapActions;
 
 export const useMapStore = create<MapStore>()(
   devtools(
