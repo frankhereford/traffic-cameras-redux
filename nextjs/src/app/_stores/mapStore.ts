@@ -33,5 +33,13 @@ export const useMapStore = create<MapStore>((set) => ({
   setZoom: (zoom) => set({ zoom }),
   setCenter: (center) => set({ center }),
   setBounds: (bounds) => set({ bounds }),
-  updateMapState: (zoom, center, bounds) => set({ zoom, center, bounds }),
+  updateMapState: (zoom, center, bounds) => {
+    console.debug("Map extents changed:", {
+      zoom,
+      center,
+      bounds,
+      timestamp: new Date().toISOString(),
+    });
+    set({ zoom, center, bounds });
+  },
 })); 
