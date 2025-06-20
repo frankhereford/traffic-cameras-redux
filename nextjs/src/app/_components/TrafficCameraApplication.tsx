@@ -8,4 +8,4 @@ export function TrafficCameraApplication() {
       <h1>Traffic Camera Application</h1>
     </div>
   );
-} 
+}
