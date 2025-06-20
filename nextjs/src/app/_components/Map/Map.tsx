@@ -7,7 +7,7 @@ import {
   type MapCameraChangedEvent,
 } from "@vis.gl/react-google-maps";
 
-import type { SocrataData } from "~/app/_hooks/useSocrataData";
+import type { SocrataData } from "~/app/_types/socrata";
 
 const containerStyle = {
   width: "100vw",
@@ -18,10 +18,16 @@ interface MapViewProps {
   socrataData: SocrataData[];
 }
 
-function MapView({ socrataData }: MapViewProps) {
+function MapView({ socrataData }: MapViewProps) { // we're going to replace this data with a function that returns a slice of camera data.
   const initialZoom = 17;
-
   const initialPosition = { lat: 30.262531, lng: -97.753983 };
+
+  const handleCameraChange = (e: MapCameraChangedEvent) => {
+    const { center, zoom, bounds } = e.detail;
+    if (bounds) {
+
+    }
+  };
 
   return (
     <APIProvider
@@ -34,6 +40,7 @@ function MapView({ socrataData }: MapViewProps) {
           tilt={0}
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID ?? "Traffic-Cameras"}
           mapTypeId="satellite"
+          onCameraChanged={handleCameraChange}
         >
 
         </Map>
