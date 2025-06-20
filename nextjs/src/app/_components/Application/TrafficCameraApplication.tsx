@@ -11,7 +11,7 @@ import { useCameras } from '~/app/_stores/cameraStore';
 
 export function TrafficCameraApplication() {
   useSocrataData(); // download the data and store it in the cameraStore.
-  useActiveCameras();
+  useActiveCameras(); // maintain a store of active cameras
 
   const cameras = useCameras();
 
