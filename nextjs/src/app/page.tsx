@@ -1,6 +1,6 @@
 import { auth } from "~/server/auth";
 import { HydrateClient } from "~/trpc/server";
-import { TrafficCameraApplication } from "./_components/TrafficCameraApplication";
+import { TrafficCameraApplication } from "./_components/Application/TrafficCameraApplication";
 
 
 export default async function Home() {
