@@ -7,7 +7,7 @@ import useVisibleCamerasStore, {
 } from '~/app/_stores/visibleCamerasStore';
 import type { SocrataData } from '../_types/socrata';
 
-const useActiveCameras = () => {
+const useVisibleCameras = () => {
   const bounds = useMapStore((state: MapStore) => state.bounds);
   const cameras = useCameraStore((state: CameraState) => state.cameras);
   const setVisibleCameras = useVisibleCamerasStore(
@@ -38,4 +38,4 @@ const useActiveCameras = () => {
   }, [bounds, cameras, setVisibleCameras]);
 };
 
-export default useActiveCameras; 
+export default useVisibleCameras; 
