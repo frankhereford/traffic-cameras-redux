@@ -7,15 +7,15 @@ import MapView from "~/app/_components/Map/Map";
 import useSocrataData from "~/app/_hooks/useSocrataData";
 import useActiveCameras from "~/app/_hooks/useActiveCameras";
 
-import useVisibleActiveCameraStore from '~/app/_stores/visibleActiveCameraStore';
+import useVisibleCamerasStore from '~/app/_stores/visibleCamerasStore';
 
 export function TrafficCameraApplication() {
   useSocrataData(); // download the data and store it in the cameraStore.
   useActiveCameras(); // maintain a store of active cameras
 
-  const visibleActiveCameras = useVisibleActiveCameraStore((state) => state.visibleActiveCameras);
+  const visibleCameras = useVisibleCamerasStore((state) => state.visibleCameras);
 
   return (
-    <MapView socrataData={visibleActiveCameras} /> 
+    <MapView socrataData={visibleCameras} /> 
   );
 }

@@ -2,16 +2,16 @@ import { useEffect } from 'react';
 import * as turf from '@turf/turf';
 import { useMapStore, type MapStore } from '~/app/_stores/mapStore';
 import useCameraStore, { type CameraState } from '~/app/_stores/cameraStore';
-import useVisibleActiveCameraStore, {
-  type VisibleActiveCameraState,
-} from '~/app/_stores/visibleActiveCameraStore';
+import useVisibleCamerasStore, {
+  type VisibleCamerasState,
+} from '~/app/_stores/visibleCamerasStore';
 import type { SocrataData } from '../_types/socrata';
 
 const useActiveCameras = () => {
   const bounds = useMapStore((state: MapStore) => state.bounds);
   const cameras = useCameraStore((state: CameraState) => state.cameras);
-  const setVisibleActiveCameras = useVisibleActiveCameraStore(
-    (state: VisibleActiveCameraState) => state.actions.setVisibleActiveCameras,
+  const setVisibleCameras = useVisibleCamerasStore(
+    (state: VisibleCamerasState) => state.actions.setVisibleCameras,
   );
 
   useEffect(() => {
@@ -33,9 +33,9 @@ const useActiveCameras = () => {
         return turf.booleanPointInPolygon(point, turf.bboxPolygon(bbox));
       });
 
-      setVisibleActiveCameras(camerasInBounds);
+      setVisibleCameras(camerasInBounds);
     }
-  }, [bounds, cameras, setVisibleActiveCameras]);
+  }, [bounds, cameras, setVisibleCameras]);
 };
 
 export default useActiveCameras; 
