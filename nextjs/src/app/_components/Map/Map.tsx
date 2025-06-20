@@ -9,6 +9,7 @@ import {
 
 import { useMapStore } from "~/app/_stores/mapStore";
 import { type EnhancedCamera } from "~/app/_stores/enhancedCameraStore";
+import { CameraMarkers } from "./CameraMarkers";
 
 const containerStyle = {
   width: "100vw",
@@ -56,7 +57,7 @@ function MapView({ cameraData }: MapViewProps) { // we're going to replace this 
           mapTypeId="satellite"
           onCameraChanged={handleCameraChanged}
         >
-
+          <CameraMarkers cameras={cameraData} />
         </Map>
       </div>
     </APIProvider>
