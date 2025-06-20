@@ -7,8 +7,8 @@ import {
   type MapCameraChangedEvent,
 } from "@vis.gl/react-google-maps";
 
-import type { SocrataData } from "~/app/_types/socrata";
 import { useMapStore } from "~/app/_stores/mapStore";
+import { type EnhancedCamera } from "~/app/_stores/enhancedCameraStore";
 
 const containerStyle = {
   width: "100vw",
@@ -16,10 +16,10 @@ const containerStyle = {
 };
 
 interface MapViewProps {
-  socrataData: SocrataData[];
+  cameraData: EnhancedCamera[];
 }
 
-function MapView({ socrataData }: MapViewProps) { // we're going to replace this data with a function that returns a slice of camera data.
+function MapView({ cameraData }: MapViewProps) { // we're going to replace this data with a function that returns a slice of camera data.
   const initialZoom = 17;
   const initialPosition = { lat: 30.262531, lng: -97.753983 };
   const updateMapState = useMapStore((state) => state.updateMapState);
