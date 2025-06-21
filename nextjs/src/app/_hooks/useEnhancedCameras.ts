@@ -20,7 +20,7 @@ const useEnhancedCameras = () => {
         const workingCameraIds = new Set(workingCameras.map((c) => c.coaId));
         const potentialCameraIds = new Set(potentialCameras.map((c) => c.coaId));
 
-        console.log(workingCameraIds);
+        // console.log(workingCameraIds);
 
         const enhancedCameras: EnhancedCamera[] = visibleCameras.flatMap((camera) => {
             if (
