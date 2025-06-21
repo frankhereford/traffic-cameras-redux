@@ -62,6 +62,9 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
   }, [camera.camera_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (camera.screenX === undefined || camera.screenY === undefined) return null;
+  
+  // Don't render the box if there's an error or camera is unavailable
+  if (hasError) return null;
 
   return (
     <div
@@ -84,12 +87,6 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
       {isLoading && (
         <div style={{ color: 'white', fontSize: '14px' }}>
           Loading...
-        </div>
-      )}
-      
-      {hasError && !isLoading && (
-        <div style={{ color: '#ff6b6b', fontSize: '14px', textAlign: 'center', padding: '10px' }}>
-          Camera unavailable
         </div>
       )}
       
