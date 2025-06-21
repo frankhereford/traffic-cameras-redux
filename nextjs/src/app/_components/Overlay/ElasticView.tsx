@@ -9,6 +9,11 @@ const STRENGTH_Y = 0.1; // How "stiff" the elastic band is for the y-axis
 const COLLISION_PADDING = 4; // Minimum spacing between camera images
 const ALPHA_DECAY = 0.02; // How quickly the simulation settles
 
+// Mouse proximity effect parameters
+const MOUSE_PROXIMITY_RADIUS = 300; // The distance at which the scaling effect begins
+const MIN_SCALE = 1.0; // The normal scale of a camera image
+const MAX_SCALE = 1.8; // The maximum scale when the mouse is closest
+
 type SimulationNode = EnhancedCamera & {
   homeX: number;
   homeY: number;
@@ -99,20 +104,18 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     if (!simulationRef.current) return;
     const simulation = simulationRef.current;
 
-    const maxDistance = 300; // The distance at which the scaling effect starts
-    const minScale = 1; // The normal scaling factor
-    const maxScale = 1.2; // The maximum scaling factor
-
     // Update scale on each node based on mouse position
     simulation.nodes().forEach((node) => {
-      let scale = minScale;
+      let scale = MIN_SCALE;
       if (mousePosition) {
         const distance = Math.sqrt(
           Math.pow(node.x - mousePosition.x, 2) +
             Math.pow(node.y - mousePosition.y, 2),
         );
-        if (distance < maxDistance) {
-          scale = maxScale - (distance / maxDistance) * (maxScale - minScale);
+        if (distance < MOUSE_PROXIMITY_RADIUS) {
+          scale =
+            MAX_SCALE -
+            (distance / MOUSE_PROXIMITY_RADIUS) * (MAX_SCALE - MIN_SCALE);
         }
       }
       node.scale = scale;
