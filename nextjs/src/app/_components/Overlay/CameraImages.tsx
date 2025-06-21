@@ -9,6 +9,10 @@ export type CameraImagesProps = {
   maxCameraScale?: number;
   camerasAtMinScale?: number;
   camerasAtMaxScale?: number;
+  strengthX?: number;
+  strengthY?: number;
+  collisionPadding?: number;
+  alphaDecay?: number;
 };
 
 const CameraImages: React.FC<CameraImagesProps> = ({
@@ -17,6 +21,10 @@ const CameraImages: React.FC<CameraImagesProps> = ({
   maxCameraScale: maxScale = 0.3,
   camerasAtMaxScale = 1,
   camerasAtMinScale = 40,
+  strengthX,
+  strengthY,
+  collisionPadding,
+  alphaDecay,
 }) => {
   const visibleCameras = cameraData.filter(
     (camera) =>
@@ -51,6 +59,10 @@ const CameraImages: React.FC<CameraImagesProps> = ({
         cameras={visibleCameras}
         boxWidth={boxWidth}
         boxHeight={boxHeight}
+        strengthX={strengthX}
+        strengthY={strengthY}
+        collisionPadding={collisionPadding}
+        alphaDecay={alphaDecay}
       />
     </div>
   );

@@ -3,12 +3,6 @@ import { type EnhancedCamera } from '~/app/_stores/enhancedCameraStore';
 import CameraImage from './CameraImage';
 import * as d3 from 'd3';
 
-// Tunable parameters
-const STRENGTH_X = 0.10; // How "stiff" the elastic band is for the x-axis
-const STRENGTH_Y = 0.10; // How "stiff" the elastic band is for the y-axis
-const COLLISION_PADDING = 4; // Minimum spacing between camera images
-const ALPHA_DECAY = 0.20; // How quickly the simulation settles
-
 // Mouse proximity effect parameters
 const MOUSE_INFLUENCE_DECAY = 0.005; // Controls how quickly the mouse effect decays with distance
 const MIN_SCALE = 1.0; // The normal scale of a camera image
@@ -30,12 +24,20 @@ type ElasticViewProps = {
   cameras: EnhancedCamera[];
   boxWidth: number;
   boxHeight: number;
+  strengthX?: number;
+  strengthY?: number;
+  collisionPadding?: number;
+  alphaDecay?: number;
 };
 
 const ElasticView: React.FC<ElasticViewProps> = ({
   cameras,
   boxWidth,
   boxHeight,
+  strengthX = 0.1,
+  strengthY = 0.1,
+  collisionPadding = 4,
+  alphaDecay = 0.2,
 }) => {
   const [animatedNodes, setAnimatedNodes] = useState<SimulationNode[]>([]);
   const simulationRef =
@@ -67,10 +69,10 @@ const ElasticView: React.FC<ElasticViewProps> = ({
   useEffect(() => {
     const simulation = d3
       .forceSimulation<SimulationNode>([])
-      .force('x', d3.forceX<SimulationNode>((d) => d.homeX).strength(STRENGTH_X))
-      .force('y', d3.forceY<SimulationNode>((d) => d.homeY).strength(STRENGTH_Y))
+      .force('x', d3.forceX<SimulationNode>((d) => d.homeX).strength(strengthX))
+      .force('y', d3.forceY<SimulationNode>((d) => d.homeY).strength(strengthY))
       .force('collide', d3.forceCollide())
-      .alphaDecay(ALPHA_DECAY)
+      .alphaDecay(alphaDecay)
       .on('tick', () => {
         setAnimatedNodes([...simulation.nodes()]);
       });
@@ -80,7 +82,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     return () => {
       simulation.stop();
     };
-  }, []);
+  }, [strengthX, strengthY, alphaDecay]);
 
   useEffect(() => {
     if (!simulationRef.current) return;
@@ -124,7 +126,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
 
         node.scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * influence;
         const baseCollisionRadius =
-          (boxWidth * node.scale) / 2 + COLLISION_PADDING;
+          (boxWidth * node.scale) / 2 + collisionPadding;
         node.collisionRadius = baseCollisionRadius * influence;
       } else {
         node.scale = MIN_SCALE;
@@ -138,7 +140,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     );
 
     simulation.alpha(0.3).restart();
-  }, [mousePosition, boxWidth, boxHeight]);
+  }, [mousePosition, boxWidth, boxHeight, collisionPadding]);
 
   return (
     <>

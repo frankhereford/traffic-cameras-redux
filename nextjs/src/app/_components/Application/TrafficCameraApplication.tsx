@@ -24,11 +24,18 @@ export function TrafficCameraApplication() {
       {enhancedCameras.length > 0 && (
         <CameraImages
           cameraData={enhancedCameras}
+
           // range of camera sizes and at what camera counts they are at their max and min
           minCamneraScale={0.02}
           maxCameraScale={0.8}
-          camerasAtMaxScale={1}
-          camerasAtMinScale={40}
+          camerasAtMaxScale={1} // at this camera count, the camera scale is at its max
+          camerasAtMinScale={40} // at this camera count, the camera scale is at its min
+
+          // elastic band properties
+          strengthX={0.1} // how "stiff" the elastic band is for the x-axis
+          strengthY={0.1} // how "stiff" the elastic band is for the y-axis
+          collisionPadding={4} // spacing between cameras
+          alphaDecay={0.2} // how quickly the simulation settles
         />
       )}
     </>
