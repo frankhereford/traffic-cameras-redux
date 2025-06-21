@@ -21,7 +21,13 @@ export function TrafficCameraApplication() {
   return (
     <>
       <GoogleMap cameraData={enhancedCameras} />
-      <CameraImages cameraData={enhancedCameras} />
+      {enhancedCameras.length > 0 && (
+        <CameraImages
+          cameraData={enhancedCameras}
+          minFactor={0.10}
+          maxFactor={0.3}
+        />
+      )}
     </>
   );
 }

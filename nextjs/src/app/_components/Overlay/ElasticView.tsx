@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { type EnhancedCamera } from '~/app/_stores/enhancedCameraStore';
-import CameraImage, { BOX_HEIGHT, BOX_WIDTH } from './CameraImage';
+import CameraImage from './CameraImage';
 import * as d3 from 'd3';
 
 // Tunable parameters
@@ -21,21 +21,25 @@ type SimulationNode = EnhancedCamera & {
 
 type ElasticViewProps = {
   cameras: EnhancedCamera[];
+  boxWidth: number;
+  boxHeight: number;
 };
 
-const ElasticView: React.FC<ElasticViewProps> = ({ cameras }) => {
+const ElasticView: React.FC<ElasticViewProps> = ({
+  cameras,
+  boxWidth,
+  boxHeight,
+}) => {
   const [animatedNodes, setAnimatedNodes] = useState<SimulationNode[]>([]);
-  const simulationRef = useRef<d3.Simulation<SimulationNode, undefined> | null>(null);
+  const simulationRef =
+    useRef<d3.Simulation<SimulationNode, undefined> | null>(null);
 
   useEffect(() => {
     const simulation = d3
       .forceSimulation<SimulationNode>([])
       .force('x', d3.forceX<SimulationNode>((d) => d.homeX).strength(STRENGTH_X))
       .force('y', d3.forceY<SimulationNode>((d) => d.homeY).strength(STRENGTH_Y))
-      .force(
-        'collide',
-        d3.forceCollide(BOX_WIDTH / 2 + COLLISION_PADDING),
-      )
+      .force('collide', d3.forceCollide())
       .alphaDecay(ALPHA_DECAY)
       .on('tick', () => {
         setAnimatedNodes([...simulation.nodes()]);
@@ -53,6 +57,10 @@ const ElasticView: React.FC<ElasticViewProps> = ({ cameras }) => {
 
     const simulation = simulationRef.current;
 
+    (simulation.force('collide') as d3.ForceCollide<SimulationNode>).radius(
+      boxWidth / 2 + COLLISION_PADDING,
+    );
+
     const oldNodes = new Map(simulation.nodes().map((d) => [d.camera_id, d]));
     const newNodes: SimulationNode[] = cameras.map((camera) => {
       const { screenX, screenY } = camera;
@@ -61,7 +69,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({ cameras }) => {
         ...camera,
         homeX: screenX!,
         homeY: screenY!,
-        r: BOX_WIDTH / 2,
+        r: boxWidth / 2,
         x: oldNode?.x ?? screenX!,
         y: oldNode?.y ?? screenY!,
         vx: oldNode?.vx,
@@ -71,12 +79,17 @@ const ElasticView: React.FC<ElasticViewProps> = ({ cameras }) => {
 
     simulation.nodes(newNodes);
     simulation.alpha(0.3).restart();
-  }, [cameras]);
+  }, [cameras, boxWidth]);
 
   return (
     <>
       {animatedNodes.map((node) => (
-        <CameraImage key={node.camera_id} camera={node} />
+        <CameraImage
+          key={node.camera_id}
+          camera={node}
+          boxWidth={boxWidth}
+          boxHeight={boxHeight}
+        />
       ))}
     </>
   );

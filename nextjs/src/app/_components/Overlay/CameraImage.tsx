@@ -3,15 +3,17 @@ import { type EnhancedCamera } from '~/app/_stores/enhancedCameraStore';
 import { api } from '~/trpc/react';
 import { env } from '~/env';
 
-// The width and height are now passed as props
-export const BOX_WIDTH = Math.round(1920 * 0.15);
-export const BOX_HEIGHT = Math.round(1080 * 0.15);
-
 interface CameraImageProps {
   camera: EnhancedCamera & { x: number; y: number };
+  boxWidth: number;
+  boxHeight: number;
 }
 
-const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
+const CameraImage: React.FC<CameraImageProps> = ({
+  camera,
+  boxWidth,
+  boxHeight,
+}) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -70,10 +72,10 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
     <div
       style={{
         position: 'absolute',
-        left: camera.x - BOX_WIDTH / 2, // Center the box on the camera position
-        top: camera.y - BOX_HEIGHT / 2,
-        width: BOX_WIDTH,
-        height: BOX_HEIGHT,
+        left: camera.x - boxWidth / 2, // Center the box on the camera position
+        top: camera.y - boxHeight / 2,
+        width: boxWidth,
+        height: boxHeight,
         backgroundColor: 'rgba(0,0,0,0.8)',
         borderRadius: '8px',
         overflow: 'hidden',
