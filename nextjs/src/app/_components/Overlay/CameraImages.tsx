@@ -25,7 +25,7 @@ const CameraImages: React.FC<CameraImagesProps> = ({
 
   // Define the range for the number of cameras and the size factor
   const minCameras = 1;
-  const maxCameras = 20; // At this number of cameras, the size factor will be at its minimum
+  const maxCameras = 40; // At this number of cameras, the size factor will be at its minimum
 
   let factor;
   if (numCameras <= minCameras) {

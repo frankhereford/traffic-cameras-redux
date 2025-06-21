@@ -24,7 +24,7 @@ export function TrafficCameraApplication() {
       {enhancedCameras.length > 0 && (
         <CameraImages
           cameraData={enhancedCameras}
-          minFactor={0.10}
+          minFactor={0.07}
           maxFactor={0.3}
         />
       )}
