@@ -17,6 +17,7 @@ type SimulationNode = EnhancedCamera & {
   y: number;
   vx?: number;
   vy?: number;
+  scale?: number;
 };
 
 type ElasticViewProps = {
@@ -33,6 +34,22 @@ const ElasticView: React.FC<ElasticViewProps> = ({
   const [animatedNodes, setAnimatedNodes] = useState<SimulationNode[]>([]);
   const simulationRef =
     useRef<d3.Simulation<SimulationNode, undefined> | null>(null);
+  const [mousePosition, setMousePosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      setMousePosition({ x: event.clientX, y: event.clientY });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
 
   useEffect(() => {
     const simulation = d3
@@ -57,10 +74,6 @@ const ElasticView: React.FC<ElasticViewProps> = ({
 
     const simulation = simulationRef.current;
 
-    (simulation.force('collide') as d3.ForceCollide<SimulationNode>).radius(
-      boxWidth / 2 + COLLISION_PADDING,
-    );
-
     const oldNodes = new Map(simulation.nodes().map((d) => [d.camera_id, d]));
     const newNodes: SimulationNode[] = cameras.map((camera) => {
       const { screenX, screenY } = camera;
@@ -74,12 +87,44 @@ const ElasticView: React.FC<ElasticViewProps> = ({
         y: oldNode?.y ?? screenY!,
         vx: oldNode?.vx,
         vy: oldNode?.vy,
+        scale: oldNode?.scale ?? 1,
       };
     });
 
     simulation.nodes(newNodes);
     simulation.alpha(0.3).restart();
   }, [cameras, boxWidth]);
+
+  useEffect(() => {
+    if (!simulationRef.current) return;
+    const simulation = simulationRef.current;
+
+    const maxDistance = 300; // The distance at which the scaling effect starts
+    const minScale = 1; // The normal scaling factor
+    const maxScale = 1.2; // The maximum scaling factor
+
+    // Update scale on each node based on mouse position
+    simulation.nodes().forEach((node) => {
+      let scale = minScale;
+      if (mousePosition) {
+        const distance = Math.sqrt(
+          Math.pow(node.x - mousePosition.x, 2) +
+            Math.pow(node.y - mousePosition.y, 2),
+        );
+        if (distance < maxDistance) {
+          scale = maxScale - (distance / maxDistance) * (maxScale - minScale);
+        }
+      }
+      node.scale = scale;
+    });
+
+    // Update collision force radius based on the new scale
+    (simulation.force('collide') as d3.ForceCollide<SimulationNode>).radius(
+      (d) => (boxWidth * (d.scale ?? 1)) / 2 + COLLISION_PADDING,
+    );
+
+    simulation.alpha(0.3).restart();
+  }, [mousePosition, boxWidth, boxHeight]);
 
   return (
     <>
@@ -89,6 +134,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
           camera={node}
           boxWidth={boxWidth}
           boxHeight={boxHeight}
+          scale={node.scale ?? 1}
         />
       ))}
     </>

@@ -7,12 +7,14 @@ interface CameraImageProps {
   camera: EnhancedCamera & { x: number; y: number };
   boxWidth: number;
   boxHeight: number;
+  scale: number;
 }
 
 const CameraImage: React.FC<CameraImageProps> = ({
   camera,
   boxWidth,
   boxHeight,
+  scale,
 }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,6 +86,8 @@ const CameraImage: React.FC<CameraImageProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         border: '2px solid rgba(255, 255, 255, 0.3)',
+        transform: `scale(${scale})`,
+        transition: 'transform 0.1s ease-out',
       }}
     >
       {isLoading && (
