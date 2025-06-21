@@ -25,7 +25,7 @@ type ElasticViewProps = {
 
 const ElasticView: React.FC<ElasticViewProps> = ({ cameras }) => {
   const [animatedNodes, setAnimatedNodes] = useState<SimulationNode[]>([]);
-  const simulationRef = useRef<d3.Simulation<SimulationNode, undefined>>();
+  const simulationRef = useRef<d3.Simulation<SimulationNode, undefined> | null>(null);
 
   useEffect(() => {
     const simulation = d3
