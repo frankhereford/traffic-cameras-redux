@@ -43,16 +43,23 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     x: number;
     y: number;
   } | null>(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       setMousePosition({ x: event.clientX, y: event.clientY });
     };
+    const handleMouseDown = () => setIsMouseDown(true);
+    const handleMouseUp = () => setIsMouseDown(false);
 
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
   }, []);
 
@@ -138,6 +145,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
           boxWidth={boxWidth}
           boxHeight={boxHeight}
           scale={node.scale ?? 1}
+          isMouseDown={isMouseDown}
         />
       ))}
     </>

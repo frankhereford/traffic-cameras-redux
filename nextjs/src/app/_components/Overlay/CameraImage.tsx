@@ -8,6 +8,7 @@ interface CameraImageProps {
   boxWidth: number;
   boxHeight: number;
   scale: number;
+  isMouseDown: boolean;
 }
 
 const CameraImage: React.FC<CameraImageProps> = ({
@@ -15,6 +16,7 @@ const CameraImage: React.FC<CameraImageProps> = ({
   boxWidth,
   boxHeight,
   scale,
+  isMouseDown,
 }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,7 +89,8 @@ const CameraImage: React.FC<CameraImageProps> = ({
         justifyContent: 'center',
         border: '2px solid rgba(255, 255, 255, 0.3)',
         transform: `scale(${scale})`,
-        transition: 'transform 0.1s ease-out',
+        transition: 'transform 0.1s ease-out, opacity 0.2s ease-in-out',
+        opacity: isMouseDown ? 0.1 : 1,
       }}
     >
       {isLoading && (
