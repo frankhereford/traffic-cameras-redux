@@ -15,7 +15,10 @@ const CameraImages: React.FC<CameraImagesProps> = ({
   maxFactor = 0.3,
 }) => {
   const visibleCameras = cameraData.filter(
-    (camera) => camera.screenX !== undefined && camera.screenY !== undefined,
+    (camera) =>
+      camera.screenX !== undefined &&
+      camera.screenY !== undefined &&
+      camera.status === 'available',
   );
 
   const numCameras = visibleCameras.length;
