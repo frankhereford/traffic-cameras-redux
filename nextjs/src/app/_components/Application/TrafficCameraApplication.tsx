@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import MapView from "~/app/_components/Map/Map";
+import GoogleMap from "~/app/_components/Map/GoogleMap";
 
 import useSocrataData from "~/app/_hooks/useSocrataData";
 import useVisibleCameras from "~/app/_hooks/useVisibleCameras";
@@ -18,6 +18,6 @@ export function TrafficCameraApplication() {
   const enhancedCameras = useEnhancedCameraStore((state) => state.enhancedCameras);
 
   return (
-    <MapView cameraData={enhancedCameras} /> 
+    <GoogleMap cameraData={enhancedCameras} /> 
   );
 }

@@ -20,7 +20,7 @@ interface MapViewProps {
   cameraData: EnhancedCamera[];
 }
 
-function MapView({ cameraData }: MapViewProps) { // we're going to replace this data with a function that returns a slice of camera data.
+function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace this data with a function that returns a slice of camera data.
   const initialZoom = 17;
   const initialPosition = { lat: 30.262531, lng: -97.753983 };
   const updateMapState = useMapStore((state) => state.updateMapState);
@@ -64,4 +64,4 @@ function MapView({ cameraData }: MapViewProps) { // we're going to replace this 
   );
 }
 
-export default MapView;
+export default GoogleMap;
