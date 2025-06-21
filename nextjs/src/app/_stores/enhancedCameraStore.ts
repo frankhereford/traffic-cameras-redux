@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { SocrataData } from '~/app/_types/socrata';
 
-export type EnhancedCameraStatus = 200 | 'unavailable' | 'unknown';
+export type EnhancedCameraStatus = 'available' | 'potential' | 'unknown';
 
 export interface EnhancedCamera extends SocrataData {
   screenX: number;
