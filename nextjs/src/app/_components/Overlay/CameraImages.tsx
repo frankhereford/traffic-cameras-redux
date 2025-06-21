@@ -5,14 +5,18 @@ import ElasticView from './ElasticView';
 
 export type CameraImagesProps = {
   cameraData: EnhancedCamera[];
-  minFactor?: number;
-  maxFactor?: number;
+  minCamneraScale?: number;
+  maxCameraScale?: number;
+  camerasAtMinScale?: number;
+  camerasAtMaxScale?: number;
 };
 
 const CameraImages: React.FC<CameraImagesProps> = ({
   cameraData,
-  minFactor = 0.05,
-  maxFactor = 0.3,
+  minCamneraScale: minScale = 0.05,
+  maxCameraScale: maxScale = 0.3,
+  camerasAtMaxScale = 1,
+  camerasAtMinScale = 40,
 }) => {
   const visibleCameras = cameraData.filter(
     (camera) =>
@@ -23,21 +27,18 @@ const CameraImages: React.FC<CameraImagesProps> = ({
 
   const numCameras = visibleCameras.length;
 
-  // Define the range for the number of cameras and the size factor
-  const minCameras = 1;
-  const maxCameras = 40; // At this number of cameras, the size factor will be at its minimum
-
   let factor;
-  if (numCameras <= minCameras) {
-    factor = maxFactor;
-  } else if (numCameras >= maxCameras) {
-    factor = minFactor;
+  if (numCameras <= camerasAtMaxScale) {
+    factor = maxScale;
+  } else if (numCameras >= camerasAtMinScale) {
+    factor = minScale;
   } else {
     // Linear interpolation between max and min factors
     factor =
-      maxFactor -
-      ((numCameras - minCameras) / (maxCameras - minCameras)) *
-        (maxFactor - minFactor);
+      maxScale -
+      ((numCameras - camerasAtMaxScale) /
+        (camerasAtMinScale - camerasAtMaxScale)) *
+        (maxScale - minScale);
   }
 
   const boxWidth = Math.round(1920 * factor);
