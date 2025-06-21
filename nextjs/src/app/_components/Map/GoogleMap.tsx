@@ -105,7 +105,7 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID ?? "Traffic-Cameras"}
           mapTypeId="satellite"
           onCameraChanged={handleCameraChanged}
-          minZoom={16}
+          minZoom={15}
         >
           <MapProjectionSetup />
           <CameraMarkers cameras={cameraData} />
