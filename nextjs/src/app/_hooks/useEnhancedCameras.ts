@@ -17,8 +17,10 @@ const useEnhancedCameras = () => {
             return;
         }
 
-        const workingCameraIds = new Set(workingCameras.map((c) => c.id));
-        const potentialCameraIds = new Set(potentialCameras.map((c) => c.id));
+        const workingCameraIds = new Set(workingCameras.map((c) => c.coaId));
+        const potentialCameraIds = new Set(potentialCameras.map((c) => c.coaId));
+
+        console.log(workingCameraIds);
 
         const enhancedCameras: EnhancedCamera[] = visibleCameras.flatMap((camera) => {
             if (
@@ -33,9 +35,9 @@ const useEnhancedCameras = () => {
             const screenCoordinates = projection(lat, lng);
             
             let status: EnhancedCamera['status'] = 'unknown';
-            if (workingCameraIds.has(camera.id)) {
+            if (workingCameraIds.has(Number(camera.camera_id))) {
                 status = 'available';
-            } else if (potentialCameraIds.has(camera.id)) {
+            } else if (potentialCameraIds.has(Number(camera.camera_id))) {
                 status = 'potential';
             }
 
