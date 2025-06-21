@@ -12,12 +12,19 @@ interface MapState {
   zoom: number;
   center: { lat: number; lng: number };
   bounds: LatLngBounds | null;
+  projection: ((lat: number, lng: number) => { x: number; y: number } | null) | null;
 }
 
 interface MapActions {
   setZoom: (zoom: number) => void;
   setCenter: (center: { lat: number; lng: number }) => void;
   setBounds: (bounds: LatLngBounds | null) => void;
+  setProjection: (
+    projection: (
+      lat: number,
+      lng: number,
+    ) => { x: number; y: number } | null,
+  ) => void;
   updateMapState: (
     zoom: number,
     center: { lat: number; lng: number },
@@ -33,9 +40,11 @@ export const useMapStore = create<MapStore>()(
       zoom: 17,
       center: { lat: 30.262531, lng: -97.753983 },
       bounds: null,
+      projection: null,
       setZoom: (zoom) => set({ zoom }),
       setCenter: (center) => set({ center }),
       setBounds: (bounds) => set({ bounds }),
+      setProjection: (projection) => set({ projection }),
       updateMapState: (zoom, center, bounds) => {
         console.debug("Map extents changed:", {
           zoom,

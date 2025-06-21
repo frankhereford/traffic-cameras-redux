@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import {
   APIProvider,
   Map,
+  useMap,
   type MapCameraChangedEvent,
 } from "@vis.gl/react-google-maps";
 
@@ -19,6 +20,54 @@ const containerStyle = {
 interface MapViewProps {
   cameraData: EnhancedCamera[];
 }
+
+function MapProjectionSetup() {
+  const map = useMap();
+  const setProjection = useMapStore((state) => state.setProjection);
+  const projectionRef = useRef<google.maps.MapCanvasProjection | null>(null);
+
+  useEffect(() => {
+    if (!map) return;
+
+    const overlay = new google.maps.OverlayView();
+    overlay.onAdd = () => {
+      // no-op
+    };
+    overlay.draw = function () {
+      if (!projectionRef.current) {
+        projectionRef.current = this.getProjection();
+        if (projectionRef.current) {
+          const projection = projectionRef.current;
+          const mapDiv = map.getDiv();
+
+          const latLngToXY = (lat: number, lng: number) => {
+            const point = projection.fromLatLngToContainerPixel(
+              new google.maps.LatLng(lat, lng),
+            );
+            if (point) {
+              const { x, y } = point;
+              return { x, y };
+            }
+            return null;
+          };
+          setProjection(latLngToXY);
+        }
+      }
+    };
+    overlay.onRemove = () => {
+      projectionRef.current = null;
+      setProjection(() => null);
+    };
+
+    overlay.setMap(map);
+    return () => {
+      overlay.setMap(null);
+    };
+  }, [map, setProjection]);
+
+  return null;
+}
+
 
 function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace this data with a function that returns a slice of camera data.
   const initialZoom = 17;
@@ -57,6 +106,7 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
           mapTypeId="satellite"
           onCameraChanged={handleCameraChanged}
         >
+          <MapProjectionSetup />
           <CameraMarkers cameras={cameraData} />
         </Map>
       </div>
