@@ -4,15 +4,15 @@ import CameraImage from './CameraImage';
 import * as d3 from 'd3';
 
 // Tunable parameters
-const STRENGTH_X = 0.1; // How "stiff" the elastic band is for the x-axis
-const STRENGTH_Y = 0.1; // How "stiff" the elastic band is for the y-axis
+const STRENGTH_X = 0.10; // How "stiff" the elastic band is for the x-axis
+const STRENGTH_Y = 0.10; // How "stiff" the elastic band is for the y-axis
 const COLLISION_PADDING = 4; // Minimum spacing between camera images
-const ALPHA_DECAY = 0.02; // How quickly the simulation settles
+const ALPHA_DECAY = 0.20; // How quickly the simulation settles
 
 // Mouse proximity effect parameters
-const MOUSE_PROXIMITY_RADIUS = 300; // The distance at which the scaling effect begins
+const MOUSE_PROXIMITY_RADIUS = 500; // The distance at which the scaling effect begins
 const MIN_SCALE = 1.0; // The normal scale of a camera image
-const MAX_SCALE = 1.8; // The maximum scale when the mouse is closest
+const MAX_SCALE = 2.8; // The maximum scale when the mouse is closest
 
 type SimulationNode = EnhancedCamera & {
   homeX: number;
