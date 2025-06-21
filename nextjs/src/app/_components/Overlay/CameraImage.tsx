@@ -3,7 +3,10 @@ import { type EnhancedCamera } from '~/app/_stores/enhancedCameraStore';
 import { api } from '~/trpc/react';
 import { env } from '~/env';
 
-const BOX_SIZE = 200; // px - increased to better show images
+// Configurable scale factor for 1080p (1920x1080) resolution
+const SCALE_FACTOR = 0.15; // Adjust this value to change the size
+const BOX_WIDTH = Math.round(1920 * SCALE_FACTOR);
+const BOX_HEIGHT = Math.round(1080 * SCALE_FACTOR);
 
 interface CameraImageProps {
   camera: EnhancedCamera;
@@ -64,10 +67,10 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
     <div
       style={{
         position: 'absolute',
-        left: camera.screenX - BOX_SIZE / 2, // Center the box on the camera position
-        top: camera.screenY - BOX_SIZE / 2,
-        width: BOX_SIZE,
-        height: BOX_SIZE,
+        left: camera.screenX - BOX_WIDTH / 2, // Center the box on the camera position
+        top: camera.screenY - BOX_HEIGHT / 2,
+        width: BOX_WIDTH,
+        height: BOX_HEIGHT,
         backgroundColor: 'rgba(0,0,0,0.8)',
         borderRadius: '8px',
         overflow: 'hidden',
