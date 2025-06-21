@@ -1,7 +1,10 @@
 "use client";
 
-import { AdvancedMarker } from "@vis.gl/react-google-maps";
-import { type EnhancedCamera } from "~/app/_stores/enhancedCameraStore";
+import { AdvancedMarker, Pin } from "@vis.gl/react-google-maps";
+import {
+  type EnhancedCamera,
+  type EnhancedCameraStatus,
+} from "~/app/_stores/enhancedCameraStore";
 
 interface CameraMarkersProps {
   cameras: EnhancedCamera[];
@@ -23,6 +26,8 @@ export function CameraMarkers({ cameras }: CameraMarkersProps) {
           return null;
         }
 
+        const colors = getPinColors(camera.status);
+
         return (
           <AdvancedMarker
             key={camera.camera_id}
@@ -30,9 +35,39 @@ export function CameraMarkers({ cameras }: CameraMarkersProps) {
               lat,
               lng,
             }}
-          />
+          >
+            <Pin
+              background={colors.background}
+              borderColor={colors.borderColor}
+              glyphColor={colors.glyphColor}
+            />
+          </AdvancedMarker>
         );
       })}
     </>
   );
+}
+
+function getPinColors(status: EnhancedCameraStatus) {
+  switch (status) {
+    case "available":
+      return {
+        background: "#22c55e",
+        borderColor: "#16a34a",
+        glyphColor: "#ffffff",
+      };
+    case "potential":
+      return {
+        background: "#facc15",
+        borderColor: "#eab308",
+        glyphColor: "#000000",
+      };
+    case "unknown":
+    default:
+      return {
+        background: "#a1a1aa",
+        borderColor: "#71717a",
+        glyphColor: "#ffffff",
+      };
+  }
 } 
