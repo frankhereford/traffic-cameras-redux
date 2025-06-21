@@ -31,6 +31,9 @@ export function TrafficCameraApplication() {
   const [strengthY, setStrengthY] = useState(0.1);
   const [collisionPadding, setCollisionPadding] = useState(4);
   const [alphaDecay, setAlphaDecay] = useState(0.2);
+  const [mouseProximityRadius, setMouseProximityRadius] = useState(500);
+  const [minScale, setMinScale] = useState(1.0);
+  const [maxScale, setMaxScale] = useState(2.8);
 
   return (
     <>
@@ -52,6 +55,12 @@ export function TrafficCameraApplication() {
           setCollisionPadding={setCollisionPadding}
           alphaDecay={alphaDecay}
           setAlphaDecay={setAlphaDecay}
+          mouseProximityRadius={mouseProximityRadius}
+          setMouseProximityRadius={setMouseProximityRadius}
+          minScale={minScale}
+          setMinScale={setMinScale}
+          maxScale={maxScale}
+          setMaxScale={setMaxScale}
         />
       )}
       <GoogleMap cameraData={enhancedCameras} />
@@ -66,6 +75,9 @@ export function TrafficCameraApplication() {
           strengthY={strengthY}
           collisionPadding={collisionPadding}
           alphaDecay={alphaDecay}
+          mouseProximityRadius={mouseProximityRadius}
+          minScale={minScale}
+          maxScale={maxScale}
         />
       )}
     </>

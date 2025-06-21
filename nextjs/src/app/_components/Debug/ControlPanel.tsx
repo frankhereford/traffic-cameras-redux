@@ -19,6 +19,12 @@ type ControlPanelProps = {
     setCollisionPadding: (value: number) => void;
     alphaDecay: number;
     setAlphaDecay: (value: number) => void;
+    mouseProximityRadius: number;
+    setMouseProximityRadius: (value: number) => void;
+    minScale: number;
+    setMinScale: (value: number) => void;
+    maxScale: number;
+    setMaxScale: (value: number) => void;
 };
 
 const SliderControl: React.FC<{
@@ -54,6 +60,9 @@ export function ControlPanel({
     strengthY, setStrengthY,
     collisionPadding, setCollisionPadding,
     alphaDecay, setAlphaDecay,
+    mouseProximityRadius, setMouseProximityRadius,
+    minScale, setMinScale,
+    maxScale, setMaxScale,
 }: ControlPanelProps) {
     return (
         <div className="fixed top-4 left-4 z-50 bg-gray-800 bg-opacity-80 text-white p-4 rounded-lg w-80 shadow-lg">
@@ -121,6 +130,30 @@ export function ControlPanel({
                 max={1}
                 step={0.01}
                 onChange={(e) => setAlphaDecay(Number(e.target.value))}
+            />
+            <SliderControl
+                label="Mouse Proximity Radius"
+                value={mouseProximityRadius}
+                min={50}
+                max={1000}
+                step={10}
+                onChange={(e) => setMouseProximityRadius(Number(e.target.value))}
+            />
+            <SliderControl
+                label="Min Scale"
+                value={minScale}
+                min={0.5}
+                max={2.0}
+                step={0.1}
+                onChange={(e) => setMinScale(Number(e.target.value))}
+            />
+            <SliderControl
+                label="Max Scale"
+                value={maxScale}
+                min={2.0}
+                max={5.0}
+                step={0.1}
+                onChange={(e) => setMaxScale(Number(e.target.value))}
             />
         </div>
     );

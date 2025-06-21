@@ -13,18 +13,24 @@ export type CameraImagesProps = {
   strengthY?: number;
   collisionPadding?: number;
   alphaDecay?: number;
+  mouseProximityRadius?: number;
+  minScale?: number;
+  maxScale?: number;
 };
 
 const CameraImages: React.FC<CameraImagesProps> = ({
   cameraData,
-  minCameraScale: minScale = 0.05,
-  maxCameraScale: maxScale = 0.3,
+  minCameraScale = 0.05,
+  maxCameraScale = 0.3,
   camerasAtMaxScale = 1,
   camerasAtMinScale = 40,
   strengthX,
   strengthY,
   collisionPadding,
   alphaDecay,
+  mouseProximityRadius,
+  minScale,
+  maxScale,
 }) => {
   const visibleCameras = cameraData.filter(
     (camera) =>
@@ -37,16 +43,16 @@ const CameraImages: React.FC<CameraImagesProps> = ({
 
   let factor;
   if (numCameras <= camerasAtMaxScale) {
-    factor = maxScale;
+    factor = maxCameraScale;
   } else if (numCameras >= camerasAtMinScale) {
-    factor = minScale;
+    factor = minCameraScale;
   } else {
     // Linear interpolation between max and min factors
     factor =
-      maxScale -
+      maxCameraScale -
       ((numCameras - camerasAtMaxScale) /
         (camerasAtMinScale - camerasAtMaxScale)) *
-        (maxScale - minScale);
+        (maxCameraScale - minCameraScale);
   }
 
   const boxWidth = Math.round(1920 * factor);
@@ -63,6 +69,9 @@ const CameraImages: React.FC<CameraImagesProps> = ({
         strengthY={strengthY}
         collisionPadding={collisionPadding}
         alphaDecay={alphaDecay}
+        mouseProximityRadius={mouseProximityRadius}
+        minScale={minScale}
+        maxScale={maxScale}
       />
     </div>
   );

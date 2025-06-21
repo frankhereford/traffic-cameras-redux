@@ -3,11 +3,6 @@ import { type EnhancedCamera } from '~/app/_stores/enhancedCameraStore';
 import CameraImage from './CameraImage';
 import * as d3 from 'd3';
 
-// Mouse proximity effect parameters
-const MOUSE_PROXIMITY_RADIUS = 500; // The distance at which the scaling effect begins
-const MIN_SCALE = 1.0; // The normal scale of a camera image
-const MAX_SCALE = 2.8; // The maximum scale when the mouse is closest
-
 type SimulationNode = EnhancedCamera & {
   homeX: number;
   homeY: number;
@@ -27,6 +22,9 @@ type ElasticViewProps = {
   strengthY?: number;
   collisionPadding?: number;
   alphaDecay?: number;
+  mouseProximityRadius?: number;
+  minScale?: number;
+  maxScale?: number;
 };
 
 const ElasticView: React.FC<ElasticViewProps> = ({
@@ -37,6 +35,9 @@ const ElasticView: React.FC<ElasticViewProps> = ({
   strengthY = 0.1,
   collisionPadding = 4,
   alphaDecay = 0.2,
+  mouseProximityRadius = 500,
+  minScale = 1.0,
+  maxScale = 2.8,
 }) => {
   const [animatedNodes, setAnimatedNodes] = useState<SimulationNode[]>([]);
   const simulationRef =
@@ -115,16 +116,16 @@ const ElasticView: React.FC<ElasticViewProps> = ({
 
     // Update scale on each node based on mouse position
     simulation.nodes().forEach((node) => {
-      let scale = MIN_SCALE;
+      let scale = minScale;
       if (mousePosition) {
         const distance = Math.sqrt(
           Math.pow(node.x - mousePosition.x, 2) +
             Math.pow(node.y - mousePosition.y, 2),
         );
-        if (distance < MOUSE_PROXIMITY_RADIUS) {
+        if (distance < mouseProximityRadius) {
           scale =
-            MAX_SCALE -
-            (distance / MOUSE_PROXIMITY_RADIUS) * (MAX_SCALE - MIN_SCALE);
+            maxScale -
+            (distance / mouseProximityRadius) * (maxScale - minScale);
         }
       }
       node.scale = scale;
@@ -136,7 +137,15 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     );
 
     simulation.alpha(0.3).restart();
-  }, [mousePosition, boxWidth, boxHeight, collisionPadding]);
+  }, [
+    mousePosition,
+    boxWidth,
+    boxHeight,
+    collisionPadding,
+    minScale,
+    maxScale,
+    mouseProximityRadius,
+  ]);
 
   return (
     <>
