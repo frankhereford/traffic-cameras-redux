@@ -26,7 +26,7 @@ export function TrafficCameraApplication() {
           cameraData={enhancedCameras}
 
           // range of camera sizes and at what camera counts they are at their max and min
-          minCamneraScale={0.02}
+          minCameraScale={0.02}
           maxCameraScale={0.8}
           camerasAtMaxScale={1} // at this camera count, the camera scale is at its max
           camerasAtMinScale={40} // at this camera count, the camera scale is at its min

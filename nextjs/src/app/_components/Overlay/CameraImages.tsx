@@ -5,7 +5,7 @@ import ElasticView from './ElasticView';
 
 export type CameraImagesProps = {
   cameraData: EnhancedCamera[];
-  minCamneraScale?: number;
+  minCameraScale?: number;
   maxCameraScale?: number;
   camerasAtMinScale?: number;
   camerasAtMaxScale?: number;
@@ -17,7 +17,7 @@ export type CameraImagesProps = {
 
 const CameraImages: React.FC<CameraImagesProps> = ({
   cameraData,
-  minCamneraScale: minScale = 0.05,
+  minCameraScale: minScale = 0.05,
   maxCameraScale: maxScale = 0.3,
   camerasAtMaxScale = 1,
   camerasAtMinScale = 40,
