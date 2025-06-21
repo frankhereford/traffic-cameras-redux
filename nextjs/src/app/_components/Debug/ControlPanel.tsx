@@ -150,8 +150,8 @@ export function ControlPanel({
             <SliderControl
                 label="Max Scale"
                 value={maxScale}
-                min={2.0}
-                max={5.0}
+                min={1.0}
+                max={3.0}
                 step={0.1}
                 onChange={(e) => setMaxScale(Number(e.target.value))}
             />
