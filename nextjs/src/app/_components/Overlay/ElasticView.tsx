@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { type EnhancedCamera } from '~/app/_stores/enhancedCameraStore';
 import CameraImage, { BOX_HEIGHT, BOX_WIDTH } from './CameraImage';
 import * as d3 from 'd3';
@@ -15,6 +15,8 @@ type SimulationNode = EnhancedCamera & {
   r: number;
   x: number;
   y: number;
+  vx?: number;
+  vy?: number;
 };
 
 type ElasticViewProps = {
@@ -23,24 +25,11 @@ type ElasticViewProps = {
 
 const ElasticView: React.FC<ElasticViewProps> = ({ cameras }) => {
   const [animatedNodes, setAnimatedNodes] = useState<SimulationNode[]>([]);
+  const simulationRef = useRef<d3.Simulation<SimulationNode, undefined>>();
 
   useEffect(() => {
-    const nodes: SimulationNode[] = cameras.map((camera) => ({
-      ...camera,
-      homeX: camera.screenX!,
-      homeY: camera.screenY!,
-      r: BOX_WIDTH / 2,
-      x: camera.screenX!,
-      y: camera.screenY!,
-    }));
-
-    if (nodes.length === 0) {
-      setAnimatedNodes([]);
-      return;
-    }
-
     const simulation = d3
-      .forceSimulation(nodes)
+      .forceSimulation<SimulationNode>([])
       .force('x', d3.forceX<SimulationNode>((d) => d.homeX).strength(STRENGTH_X))
       .force('y', d3.forceY<SimulationNode>((d) => d.homeY).strength(STRENGTH_Y))
       .force(
@@ -49,12 +38,39 @@ const ElasticView: React.FC<ElasticViewProps> = ({ cameras }) => {
       )
       .alphaDecay(ALPHA_DECAY)
       .on('tick', () => {
-        setAnimatedNodes([...nodes]);
+        setAnimatedNodes([...simulation.nodes()]);
       });
+
+    simulationRef.current = simulation;
 
     return () => {
       simulation.stop();
     };
+  }, []);
+
+  useEffect(() => {
+    if (!simulationRef.current) return;
+
+    const simulation = simulationRef.current;
+
+    const oldNodes = new Map(simulation.nodes().map((d) => [d.camera_id, d]));
+    const newNodes: SimulationNode[] = cameras.map((camera) => {
+      const { screenX, screenY } = camera;
+      const oldNode = oldNodes.get(camera.camera_id);
+      return {
+        ...camera,
+        homeX: screenX!,
+        homeY: screenY!,
+        r: BOX_WIDTH / 2,
+        x: oldNode?.x ?? screenX!,
+        y: oldNode?.y ?? screenY!,
+        vx: oldNode?.vx,
+        vy: oldNode?.vy,
+      };
+    });
+
+    simulation.nodes(newNodes);
+    simulation.alpha(0.3).restart();
   }, [cameras]);
 
   return (
