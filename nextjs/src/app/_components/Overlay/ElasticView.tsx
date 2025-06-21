@@ -10,7 +10,7 @@ const COLLISION_PADDING = 4; // Minimum spacing between camera images
 const ALPHA_DECAY = 0.20; // How quickly the simulation settles
 
 // Mouse proximity effect parameters
-const MOUSE_PROXIMITY_RADIUS = 500; // The distance at which the scaling effect begins
+const MOUSE_INFLUENCE_DECAY = 0.005; // Controls how quickly the mouse effect decays with distance
 const MIN_SCALE = 1.0; // The normal scale of a camera image
 const MAX_SCALE = 2.8; // The maximum scale when the mouse is closest
 
@@ -23,6 +23,7 @@ type SimulationNode = EnhancedCamera & {
   vx?: number;
   vy?: number;
   scale?: number;
+  collisionRadius?: number;
 };
 
 type ElasticViewProps = {
@@ -100,6 +101,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
         vx: oldNode?.vx,
         vy: oldNode?.vy,
         scale: oldNode?.scale ?? 1,
+        collisionRadius: oldNode?.collisionRadius ?? 0,
       };
     });
 
@@ -111,26 +113,28 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     if (!simulationRef.current) return;
     const simulation = simulationRef.current;
 
-    // Update scale on each node based on mouse position
+    // Update scale and collision radius on each node based on mouse position
     simulation.nodes().forEach((node) => {
-      let scale = MIN_SCALE;
       if (mousePosition) {
         const distance = Math.sqrt(
           Math.pow(node.x - mousePosition.x, 2) +
             Math.pow(node.y - mousePosition.y, 2),
         );
-        if (distance < MOUSE_PROXIMITY_RADIUS) {
-          scale =
-            MAX_SCALE -
-            (distance / MOUSE_PROXIMITY_RADIUS) * (MAX_SCALE - MIN_SCALE);
-        }
+        const influence = Math.exp(-distance * MOUSE_INFLUENCE_DECAY);
+
+        node.scale = MIN_SCALE + (MAX_SCALE - MIN_SCALE) * influence;
+        const baseCollisionRadius =
+          (boxWidth * node.scale) / 2 + COLLISION_PADDING;
+        node.collisionRadius = baseCollisionRadius * influence;
+      } else {
+        node.scale = MIN_SCALE;
+        node.collisionRadius = 0;
       }
-      node.scale = scale;
     });
 
     // Update collision force radius based on the new scale
     (simulation.force('collide') as d3.ForceCollide<SimulationNode>).radius(
-      (d) => (boxWidth * (d.scale ?? 1)) / 2 + COLLISION_PADDING,
+      (d) => d.collisionRadius ?? 0,
     );
 
     simulation.alpha(0.3).restart();
