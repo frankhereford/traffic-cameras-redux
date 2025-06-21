@@ -23,17 +23,17 @@ export function TrafficCameraApplication() {
   const enhancedCameras = useEnhancedCameraStore((state) => state.enhancedCameras);
 
   // State for camera image properties
-  const [minCameraScale, setMinCameraScale] = useState(0.02);
-  const [maxCameraScale, setMaxCameraScale] = useState(0.8);
-  const [camerasAtMaxScale, setCamerasAtMaxScale] = useState(1);
-  const [camerasAtMinScale, setCamerasAtMinScale] = useState(40);
-  const [strengthX, setStrengthX] = useState(0.1);
-  const [strengthY, setStrengthY] = useState(0.1);
-  const [collisionPadding, setCollisionPadding] = useState(4);
-  const [alphaDecay, setAlphaDecay] = useState(0.2);
-  const [mouseProximityRadius, setMouseProximityRadius] = useState(500);
+  const [minCameraScale, setMinCameraScale] = useState(0.08);
+  const [maxCameraScale, setMaxCameraScale] = useState(0.4);
+  const [camerasAtMaxScale, setCamerasAtMaxScale] = useState(2);
+  const [camerasAtMinScale, setCamerasAtMinScale] = useState(34);
+  const [strengthX, setStrengthX] = useState(0.2);
+  const [strengthY, setStrengthY] = useState(0.2);
+  const [collisionPadding, setCollisionPadding] = useState(8);
+  const [alphaDecay, setAlphaDecay] = useState(0.62);
+  const [mouseProximityRadius, setMouseProximityRadius] = useState(750);
   const [minScale, setMinScale] = useState(1.0);
-  const [maxScale, setMaxScale] = useState(2.8);
+  const [maxScale, setMaxScale] = useState(2.0);
 
   return (
     <>
