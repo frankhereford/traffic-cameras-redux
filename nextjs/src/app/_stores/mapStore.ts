@@ -13,6 +13,7 @@ interface MapState {
   center: { lat: number; lng: number };
   bounds: LatLngBounds | null;
   projection: ((lat: number, lng: number) => { x: number; y: number } | null) | null;
+  isIdle: boolean;
 }
 
 interface MapActions {
@@ -27,8 +28,10 @@ interface MapActions {
   ) => void;
   updateMapState: (
     zoom: number,
+    
     center: { lat: number; lng: number },
     bounds: LatLngBounds,
+    isIdle: boolean,
   ) => void;
 }
 
@@ -41,18 +44,20 @@ export const useMapStore = create<MapStore>()(
       center: { lat: 30.262531, lng: -97.753983 },
       bounds: null,
       projection: null,
+      isIdle: true,
       setZoom: (zoom) => set({ zoom }),
       setCenter: (center) => set({ center }),
       setBounds: (bounds) => set({ bounds }),
       setProjection: (projection) => set({ projection }),
-      updateMapState: (zoom, center, bounds) => {
+      updateMapState: (zoom, center, bounds, isIdle) => {
         console.debug("Map extents changed:", {
           zoom,
           center,
           bounds,
+          isIdle,
           timestamp: new Date().toISOString(),
         });
-        set({ zoom, center, bounds });
+        set({ zoom, center, bounds, isIdle });
       },
     }),
     {

@@ -83,12 +83,17 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
       const { zoom, center, bounds } = ev.detail;
 
       if (center && bounds) {
-        updateMapState(zoom, center, {
-          north: bounds.north,
-          south: bounds.south,
-          east: bounds.east,
-          west: bounds.west,
-        });
+        updateMapState(
+          zoom,
+          center,
+          {
+            north: bounds.north,
+            south: bounds.south,
+            east: bounds.east,
+            west: bounds.west,
+          },
+          false,
+        );
       }
     },
     [updateMapState],
@@ -96,7 +101,6 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
 
   const handleOnIdle = useCallback(
     (ev: MapEvent) => {
-      console.log("onIdle", ev);
       const zoom = ev.map.getZoom();
       const center = ev.map.getCenter();
       const bounds = ev.map.getBounds();
@@ -113,6 +117,7 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
             east: ne.lng(),
             west: sw.lng(),
           },
+          true,
         );
       }
     },

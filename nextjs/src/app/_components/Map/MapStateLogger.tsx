@@ -18,39 +18,39 @@ export function MapStateLogger() {
     const onCenterChanged = () => {
       const center = map.getCenter();
       if (center) {
-        console.log("center_changed:", center.toJSON());
+        console.debug("center_changed:", center.toJSON());
       }
       setCenterChanged(true);
       setTimeout(() => setCenterChanged(false), 200);
     };
     const onZoomChanged = () => {
-      console.log("zoom_changed:", map.getZoom());
+      console.debug("zoom_changed:", map.getZoom());
       setZoomChanged(true);
       setTimeout(() => setZoomChanged(false), 200);
     };
     const onBoundsChanged = () => {
       const bounds = map.getBounds();
       if (bounds) {
-        console.log("bounds_changed:", bounds.toJSON());
+        console.debug("bounds_changed:", bounds.toJSON());
       }
       setBoundsChanged(true);
       setTimeout(() => setBoundsChanged(false), 200);
     };
 
     const onDrag = () => {
-      console.log("drag event fired");
+      console.debug("drag event fired");
       setDragging(true);
     };
 
     const onDragEnd = () => {
-      console.log("dragend event fired");
+      console.debug("dragend event fired");
       setDragging(false);
       setDragEnd(true);
       setTimeout(() => setDragEnd(false), 200);
     };
 
     const onIdle = () => {
-      console.log("idle event fired");
+      console.debug("idle event fired");
       setIdle(true);
       setTimeout(() => setIdle(false), 200);
     };
