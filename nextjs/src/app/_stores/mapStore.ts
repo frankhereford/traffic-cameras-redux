@@ -27,12 +27,14 @@ interface MapActions {
   ) => void;
   updateMapState: (
     zoom: number,
+    
     center: { lat: number; lng: number },
     bounds: LatLngBounds,
   ) => void;
+  setIsIdle: (isIdle: boolean) => void;
 }
 
-export type MapStore = MapState & MapActions;
+export type MapStore = MapState & MapActions & { isIdle: boolean };
 
 export const useMapStore = create<MapStore>()(
   devtools(
@@ -41,6 +43,7 @@ export const useMapStore = create<MapStore>()(
       center: { lat: 30.262531, lng: -97.753983 },
       bounds: null,
       projection: null,
+      isIdle: true,
       setZoom: (zoom) => set({ zoom }),
       setCenter: (center) => set({ center }),
       setBounds: (bounds) => set({ bounds }),
@@ -54,6 +57,7 @@ export const useMapStore = create<MapStore>()(
         });
         set({ zoom, center, bounds });
       },
+      setIsIdle: (isIdle) => set({ isIdle }),
     }),
     {
       name: "map-store",
