@@ -81,22 +81,7 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
   // Handle camera changes using React event handler
   const handleCameraChanged = useCallback(
     (ev: MapCameraChangedEvent) => {
-      // console.log("cameraChanged", ev)
       setIsIdle(false);
-      // const { zoom, center, bounds } = ev.detail;
-
-      // if (center && bounds) {
-      //   updateMapState(
-      //     zoom,
-      //     center,
-      //     {
-      //       north: bounds.north,
-      //       south: bounds.south,
-      //       east: bounds.east,
-      //       west: bounds.west,
-      //     },
-      //   );
-      // }
     },
     [updateMapState, setIsIdle],
   );
@@ -104,29 +89,9 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
   const handleOnIdle = useCallback(
     (ev: MapEvent) => {
       setIsIdle(true); // set false for high performance mode
-      // const zoom = ev.map.getZoom();
-      // const center = ev.map.getCenter();
-      // const bounds = ev.map.getBounds();
-
-      // if (zoom && center && bounds) {
-      //   const ne = bounds.getNorthEast();
-      //   const sw = bounds.getSouthWest();
-      //   updateMapState(
-      //     zoom,
-      //     { lat: center.lat(), lng: center.lng() },
-      //     {
-      //       north: ne.lat(),
-      //       south: sw.lat(),
-      //       east: ne.lng(),
-      //       west: sw.lng(),
-      //     },
-      //   );
-      // }
     },
     [updateMapState, setIsIdle],
   );
-
-
 
   return (
     <APIProvider
