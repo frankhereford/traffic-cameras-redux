@@ -22,6 +22,7 @@ const CameraImages: React.FC<CameraImagesProps> = ({ cameraData }) => {
         forceStrength={0.30}
         alphaDecay={0.1}
         collisionPadding={0}
+        collisionStrength={0.05}
       />
     </div>
   );

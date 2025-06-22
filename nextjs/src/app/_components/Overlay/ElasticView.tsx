@@ -21,6 +21,7 @@ type ElasticViewProps = {
   forceStrength: number;
   alphaDecay: number;
   collisionPadding: number;
+  collisionStrength: number;
 };
 
 const ElasticView: React.FC<ElasticViewProps> = ({
@@ -30,6 +31,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
   forceStrength,
   alphaDecay,
   collisionPadding,
+  collisionStrength,
 }) => {
   const [animatedNodes, setAnimatedNodes] = useState<SimulationNode[]>([]);
   const simulationRef = useRef<d3.Simulation<SimulationNode, undefined> | null>(
@@ -49,7 +51,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
       )
       .force(
         'collide',
-        d3.forceCollide<SimulationNode>((d) => d.r).strength(1),
+        d3.forceCollide<SimulationNode>((d) => d.r).strength(collisionStrength),
       )
       .alphaDecay(alphaDecay)
       .on('tick', () => {
@@ -67,7 +69,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     return () => {
       simulation.stop();
     };
-  }, [forceStrength, alphaDecay]);
+  }, [forceStrength, alphaDecay, collisionStrength]);
 
   useEffect(() => {
     if (!simulationRef.current) return;
