@@ -103,7 +103,7 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
 
   const handleOnIdle = useCallback(
     (ev: MapEvent) => {
-      setIsIdle(false);
+      setIsIdle(true); // set false for high performance mode
       // const zoom = ev.map.getZoom();
       // const center = ev.map.getCenter();
       // const bounds = ev.map.getBounds();
