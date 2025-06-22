@@ -71,6 +71,7 @@ function MapProjectionSetup() {
 
 
 function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace this data with a function that returns a slice of camera data.
+
   const initialZoom = 17;
   const initialPosition = { lat: 30.262531, lng: -97.753983 };
   const updateMapState = useMapStore((state) => state.updateMapState);
@@ -78,6 +79,7 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
   // Handle camera changes using React event handler
   const handleCameraChanged = useCallback(
     (ev: MapCameraChangedEvent) => {
+      // console.log("cameraChanged", ev)
       const { zoom, center, bounds } = ev.detail;
 
       if (center && bounds) {
@@ -94,6 +96,7 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
 
   const handleOnIdle = useCallback(
     (ev: MapEvent) => {
+      console.log("onIdle", ev);
       const zoom = ev.map.getZoom();
       const center = ev.map.getCenter();
       const bounds = ev.map.getBounds();
@@ -116,7 +119,35 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
     [updateMapState],
   );
 
+  // const handleOnCenterChanged = useCallback(
+  //   (ev: MapEvent) => {
+  //     const center = ev.map.getCenter();
+  //     const bounds = ev.map.getBounds();
+  //     console.log("centerChanged center", center);
+  //   },
+  //   [],
+  // );
+
+  // const handleOnDrag = useCallback(
+  //   (ev: MapEvent) => {
+  //     console.log("onDrag", ev);
+  //   },
+  //   [],
+  // );
   
+  // const handleOnDragEnd = useCallback(
+  //   (ev: MapEvent) => {
+  //     console.log("onDragEnd", ev);
+  //   },
+  //   [],
+  // );
+
+  // const handleOnMouseOver = useCallback(
+  //   (ev: MapEvent) => {
+  //     console.log("onMouseOver", ev);
+  //   },
+  //   [],
+  // );
 
   return (
     <APIProvider
@@ -131,6 +162,10 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
           mapTypeId="satellite"
           onCameraChanged={handleCameraChanged}
           onIdle={handleOnIdle}
+          // onCenterChanged={handleOnCenterChanged}
+          // onDrag={handleOnDrag}
+          // onDragend={handleOnDragEnd}
+          // onMouseover={handleOnMouseOver}
           minZoom={16}
         >
           <MapProjectionSetup />
