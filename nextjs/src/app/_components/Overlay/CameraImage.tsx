@@ -3,16 +3,21 @@ import { type EnhancedCamera } from '~/app/_stores/enhancedCameraStore';
 import { api } from '~/trpc/react';
 import { env } from '~/env';
 
-// Configurable scale factor for 1080p (1920x1080) resolution
-const SCALE_FACTOR = 0.15; // Adjust this value to change the size
-const BOX_WIDTH = Math.round(1920 * SCALE_FACTOR);
-const BOX_HEIGHT = Math.round(1080 * SCALE_FACTOR);
-
 interface CameraImageProps {
-  camera: EnhancedCamera;
+  camera: EnhancedCamera & { x: number; y: number };
+  boxWidth: number;
+  boxHeight: number;
+  scale: number;
+  isMouseDown: boolean;
 }
 
-const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
+const CameraImage: React.FC<CameraImageProps> = ({
+  camera,
+  boxWidth,
+  boxHeight,
+  scale,
+  isMouseDown,
+}) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -61,7 +66,8 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
     };
   }, [camera.camera_id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (camera.screenX === undefined || camera.screenY === undefined) return null;
+  // This check is now handled by the parent component
+  // if (camera.screenX === undefined || camera.screenY === undefined) return null;
   
   // Don't render the box if there's an error or camera is unavailable
   if (hasError) return null;
@@ -70,10 +76,10 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
     <div
       style={{
         position: 'absolute',
-        left: camera.screenX - BOX_WIDTH / 2, // Center the box on the camera position
-        top: camera.screenY - BOX_HEIGHT / 2,
-        width: BOX_WIDTH,
-        height: BOX_HEIGHT,
+        left: camera.x - boxWidth / 2, // Center the box on the camera position
+        top: camera.y - boxHeight / 2,
+        width: boxWidth,
+        height: boxHeight,
         backgroundColor: 'rgba(0,0,0,0.8)',
         borderRadius: '8px',
         overflow: 'hidden',
@@ -82,6 +88,9 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
         alignItems: 'center',
         justifyContent: 'center',
         border: '2px solid rgba(255, 255, 255, 0.3)',
+        transform: `scale(${scale})`,
+        transition: 'transform 0.1s ease-out, opacity 0.2s ease-in-out',
+        opacity: isMouseDown ? 0.1 : 1,
       }}
     >
       {isLoading && (
