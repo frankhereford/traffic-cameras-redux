@@ -119,35 +119,7 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
     [updateMapState],
   );
 
-  // const handleOnCenterChanged = useCallback(
-  //   (ev: MapEvent) => {
-  //     const center = ev.map.getCenter();
-  //     const bounds = ev.map.getBounds();
-  //     console.log("centerChanged center", center);
-  //   },
-  //   [],
-  // );
 
-  // const handleOnDrag = useCallback(
-  //   (ev: MapEvent) => {
-  //     console.log("onDrag", ev);
-  //   },
-  //   [],
-  // );
-  
-  // const handleOnDragEnd = useCallback(
-  //   (ev: MapEvent) => {
-  //     console.log("onDragEnd", ev);
-  //   },
-  //   [],
-  // );
-
-  // const handleOnMouseOver = useCallback(
-  //   (ev: MapEvent) => {
-  //     console.log("onMouseOver", ev);
-  //   },
-  //   [],
-  // );
 
   return (
     <APIProvider
@@ -162,10 +134,7 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
           mapTypeId="satellite"
           onCameraChanged={handleCameraChanged}
           onIdle={handleOnIdle}
-          // onCenterChanged={handleOnCenterChanged}
-          // onDrag={handleOnDrag}
-          // onDragend={handleOnDragEnd}
-          // onMouseover={handleOnMouseOver}
+
           minZoom={16}
         >
           <MapProjectionSetup />
