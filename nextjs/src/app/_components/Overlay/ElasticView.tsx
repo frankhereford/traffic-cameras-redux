@@ -11,6 +11,7 @@ type SimulationNode = EnhancedCamera & {
   homeX: number;
   homeY: number;
   r: number;
+  strain: number;
 };
 
 type ElasticViewProps = {
@@ -52,7 +53,13 @@ const ElasticView: React.FC<ElasticViewProps> = ({
       )
       .alphaDecay(alphaDecay)
       .on('tick', () => {
-        setAnimatedNodes([...simulation.nodes()]);
+        const nodes = simulation.nodes();
+        for (const d of nodes) {
+          d.strain = Math.sqrt(
+            Math.pow(d.x - d.homeX, 2) + Math.pow(d.y - d.homeY, 2),
+          );
+        }
+        setAnimatedNodes([...nodes]);
       });
 
     simulationRef.current = simulation;
@@ -81,6 +88,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
           y: oldNode?.y ?? camera.screenY,
           vx: oldNode?.vx,
           vy: oldNode?.vy,
+          strain: oldNode?.strain ?? 0,
         });
       }
       return acc;
@@ -89,6 +97,11 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     simulationRef.current.nodes(newNodes);
     simulationRef.current.alpha(0.3).restart();
   }, [cameras, boxWidth, collisionPadding]);
+
+  const maxStrain = Math.max(0, ...animatedNodes.map((n) => n.strain));
+  const strainColorScale = d3
+    .scaleSequential(d3.interpolateRgb('blue', 'red'))
+    .domain([0, maxStrain || 1]);
 
   return (
     <>
@@ -101,6 +114,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
           styleOverride={{
             left: node.x - boxWidth / 2,
             top: node.y - boxHeight / 2,
+            boxShadow: `0 0 10px 5px ${strainColorScale(node.strain)}`,
           }}
         />
       ))}
