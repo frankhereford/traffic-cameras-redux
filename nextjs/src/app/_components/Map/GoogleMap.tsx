@@ -6,6 +6,7 @@ import {
   Map,
   useMap,
   type MapCameraChangedEvent,
+  type MapEvent,
 } from "@vis.gl/react-google-maps";
 
 import { useMapStore } from "~/app/_stores/mapStore";
@@ -80,18 +81,42 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
       const { zoom, center, bounds } = ev.detail;
 
       if (center && bounds) {
-        const boundsData = {
+        updateMapState(zoom, center, {
           north: bounds.north,
           south: bounds.south,
           east: bounds.east,
           west: bounds.west,
-        };
-
-        updateMapState(zoom, center, boundsData);
+        });
       }
     },
     [updateMapState],
   );
+
+  const handleOnIdle = useCallback(
+    (ev: MapEvent) => {
+      const zoom = ev.map.getZoom();
+      const center = ev.map.getCenter();
+      const bounds = ev.map.getBounds();
+
+      if (zoom && center && bounds) {
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        updateMapState(
+          zoom,
+          { lat: center.lat(), lng: center.lng() },
+          {
+            north: ne.lat(),
+            south: sw.lat(),
+            east: ne.lng(),
+            west: sw.lng(),
+          },
+        );
+      }
+    },
+    [updateMapState],
+  );
+
+  
 
   return (
     <APIProvider
@@ -105,6 +130,7 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAP_ID ?? "Traffic-Cameras"}
           mapTypeId="satellite"
           onCameraChanged={handleCameraChanged}
+          onIdle={handleOnIdle}
           minZoom={16}
         >
           <MapProjectionSetup />
