@@ -98,16 +98,6 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     simulationRef.current.alpha(0.3).restart();
   }, [cameras, boxWidth, collisionPadding]);
 
-  const maxStrain = Math.max(0, ...animatedNodes.map((n) => n.strain));
-
-//   useEffect(() => {
-//     console.debug('Max strain:', maxStrain);
-//   }, [maxStrain]);
-
-  const strainColorScale = d3
-    .scaleSequential(d3.interpolateRgb('blue', 'red'))
-    .domain([0, maxStrain || 1]);
-
   return (
     <>
       {animatedNodes.map((node) => (
@@ -119,7 +109,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
           styleOverride={{
             left: node.x - boxWidth / 2,
             top: node.y - boxHeight / 2,
-            boxShadow: `0 0 10px 5px ${strainColorScale(node.strain)}`,
+            border: node.strain >= 200 ? '2px solid red' : 'none',
           }}
         />
       ))}
