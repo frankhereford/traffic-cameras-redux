@@ -34,7 +34,7 @@ export function MapStatePoller() {
           },
         );
       }
-    }, 16);
+    }, 16); // 60fps
 
     return () => clearInterval(intervalId);
   }, [map, updateMapState]);

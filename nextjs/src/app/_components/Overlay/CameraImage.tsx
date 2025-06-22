@@ -16,6 +16,7 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [rotation] = useState(Math.random() * 30 - 15);
 
   const getJwtMutation = api.camera.getJwt.useMutation({
     onSuccess: (data) => {
@@ -82,6 +83,10 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
         alignItems: 'center',
         justifyContent: 'center',
         border: '2px solid rgba(255, 255, 255, 0.3)',
+        transformOrigin: 'center center',
+        opacity: imageUrl ? 1 : 0,
+        transform: imageUrl ? 'scale(1) translateY(0) rotate(0deg)' : `scale(0.8) translateY(20px) rotate(${rotation}deg)`,
+        transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease-out',
       }}
     >
       {isLoading && (
