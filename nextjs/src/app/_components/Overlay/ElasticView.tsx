@@ -89,6 +89,8 @@ const ElasticView: React.FC<ElasticViewProps> = ({
         <CameraImage
           key={node.camera_id}
           camera={node}
+          boxWidth={boxWidth}
+          boxHeight={boxHeight}
           styleOverride={{
             left: node.x - boxWidth / 2,
             top: node.y - boxHeight / 2,

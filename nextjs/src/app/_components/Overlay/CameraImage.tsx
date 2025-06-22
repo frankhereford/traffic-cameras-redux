@@ -3,17 +3,14 @@ import { type EnhancedCamera } from '~/app/_stores/enhancedCameraStore';
 import { api } from '~/trpc/react';
 import { env } from '~/env';
 
-// Configurable scale factor for 1080p (1920x1080) resolution
-const SCALE_FACTOR = 0.15; // Adjust this value to change the size
-const BOX_WIDTH = Math.round(1920 * SCALE_FACTOR);
-const BOX_HEIGHT = Math.round(1080 * SCALE_FACTOR);
-
 interface CameraImageProps {
   camera: EnhancedCamera;
   styleOverride?: React.CSSProperties;
+  boxWidth: number;
+  boxHeight: number;
 }
 
-const CameraImage: React.FC<CameraImageProps> = ({ camera, styleOverride }) => {
+const CameraImage: React.FC<CameraImageProps> = ({ camera, styleOverride, boxWidth, boxHeight }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -72,10 +69,10 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera, styleOverride }) => {
     <div
       style={{
         position: 'absolute',
-        left: camera.screenX - BOX_WIDTH / 2, // Center the box on the camera position
-        top: camera.screenY - BOX_HEIGHT / 2,
-        width: BOX_WIDTH,
-        height: BOX_HEIGHT,
+        left: camera.screenX - boxWidth / 2, // Center the box on the camera position
+        top: camera.screenY - boxHeight / 2,
+        width: boxWidth,
+        height: boxHeight,
         backgroundColor: 'rgba(0,0,0,0.8)',
         borderRadius: '8px',
         overflow: 'hidden',
