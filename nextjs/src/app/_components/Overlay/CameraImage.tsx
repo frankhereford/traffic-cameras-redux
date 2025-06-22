@@ -10,9 +10,10 @@ const BOX_HEIGHT = Math.round(1080 * SCALE_FACTOR);
 
 interface CameraImageProps {
   camera: EnhancedCamera;
+  styleOverride?: React.CSSProperties;
 }
 
-const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
+const CameraImage: React.FC<CameraImageProps> = ({ camera, styleOverride }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -87,6 +88,7 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
         opacity: imageUrl ? 1 : 0,
         transform: imageUrl ? 'scale(1) translateY(0) rotate(0deg)' : `scale(0.8) translateY(20px) rotate(${rotation}deg)`,
         transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease-out',
+        ...styleOverride,
       }}
     >
       {isLoading && (
