@@ -21,6 +21,7 @@ type ElasticViewProps = {
   strengthX?: number;
   strengthY?: number;
   collisionPadding?: number;
+  collisionStrength?: number;
   alphaDecay?: number;
   mouseProximityRadius?: number;
   minScale?: number;
@@ -34,6 +35,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
   strengthX = 0.1,
   strengthY = 0.1,
   collisionPadding = 4,
+  collisionStrength = 1,
   alphaDecay = 0.2,
   mouseProximityRadius = 500,
   minScale = 1.0,
@@ -71,7 +73,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
       .forceSimulation<SimulationNode>([])
       .force('x', d3.forceX<SimulationNode>((d) => d.homeX).strength(strengthX))
       .force('y', d3.forceY<SimulationNode>((d) => d.homeY).strength(strengthY))
-      .force('collide', d3.forceCollide())
+      .force('collide', d3.forceCollide().strength(collisionStrength))
       .alphaDecay(alphaDecay)
       .on('tick', () => {
         setAnimatedNodes([...simulation.nodes()]);
@@ -82,7 +84,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     return () => {
       simulation.stop();
     };
-  }, [strengthX, strengthY, alphaDecay]);
+  }, [strengthX, strengthY, alphaDecay, collisionStrength]);
 
   useEffect(() => {
     if (!simulationRef.current) return;
@@ -132,6 +134,9 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     });
 
     // Update collision force radius based on the new scale
+    (
+      simulation.force('collide') as d3.ForceCollide<SimulationNode>
+    ).strength(collisionStrength);
     (simulation.force('collide') as d3.ForceCollide<SimulationNode>).radius(
       (d) => (boxWidth * (d.scale ?? 1)) / 2 + collisionPadding,
     );
@@ -145,6 +150,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     minScale,
     maxScale,
     mouseProximityRadius,
+    collisionStrength,
   ]);
 
   return (

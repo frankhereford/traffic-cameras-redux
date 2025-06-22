@@ -25,6 +25,8 @@ type ControlPanelProps = {
     setMinScale: (value: number) => void;
     maxScale: number;
     setMaxScale: (value: number) => void;
+    collisionStrength: number;
+    setCollisionStrength: (value: number) => void;
 };
 
 const SliderControl: React.FC<{
@@ -63,6 +65,7 @@ export function ControlPanel({
     mouseProximityRadius, setMouseProximityRadius,
     minScale, setMinScale,
     maxScale, setMaxScale,
+    collisionStrength, setCollisionStrength,
 }: ControlPanelProps) {
     return (
         <div className="fixed top-4 left-4 z-50 bg-gray-800 bg-opacity-80 text-white p-4 rounded-lg w-80 shadow-lg">
@@ -154,6 +157,14 @@ export function ControlPanel({
                 max={3.0}
                 step={0.1}
                 onChange={(e) => setMaxScale(Number(e.target.value))}
+            />
+            <SliderControl
+                label="Collision Strength"
+                value={collisionStrength}
+                min={0}
+                max={.5}
+                step={0.01}
+                onChange={(e) => setCollisionStrength(Number(e.target.value))}
             />
         </div>
     );

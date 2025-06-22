@@ -16,6 +16,7 @@ export type CameraImagesProps = {
   mouseProximityRadius?: number;
   minScale?: number;
   maxScale?: number;
+  collisionStrength?: number;
 };
 
 const CameraImages: React.FC<CameraImagesProps> = ({
@@ -31,6 +32,7 @@ const CameraImages: React.FC<CameraImagesProps> = ({
   mouseProximityRadius,
   minScale,
   maxScale,
+  collisionStrength,
 }) => {
   const visibleCameras = cameraData.filter(
     (camera) =>
@@ -72,6 +74,7 @@ const CameraImages: React.FC<CameraImagesProps> = ({
         mouseProximityRadius={mouseProximityRadius}
         minScale={minScale}
         maxScale={maxScale}
+        collisionStrength={collisionStrength}
       />
     </div>
   );
