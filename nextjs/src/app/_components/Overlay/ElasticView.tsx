@@ -99,6 +99,11 @@ const ElasticView: React.FC<ElasticViewProps> = ({
   }, [cameras, boxWidth, collisionPadding]);
 
   const maxStrain = Math.max(0, ...animatedNodes.map((n) => n.strain));
+
+//   useEffect(() => {
+//     console.debug('Max strain:', maxStrain);
+//   }, [maxStrain]);
+
   const strainColorScale = d3
     .scaleSequential(d3.interpolateRgb('blue', 'red'))
     .domain([0, maxStrain || 1]);
