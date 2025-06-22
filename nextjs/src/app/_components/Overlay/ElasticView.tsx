@@ -17,12 +17,18 @@ type ElasticViewProps = {
   cameras: EnhancedCamera[];
   boxWidth: number;
   boxHeight: number;
+  forceStrength: number;
+  alphaDecay: number;
+  collisionPadding: number;
 };
 
 const ElasticView: React.FC<ElasticViewProps> = ({
   cameras,
   boxWidth,
   boxHeight,
+  forceStrength,
+  alphaDecay,
+  collisionPadding,
 }) => {
   const [animatedNodes, setAnimatedNodes] = useState<SimulationNode[]>([]);
   const simulationRef = useRef<d3.Simulation<SimulationNode, undefined> | null>(
@@ -34,16 +40,17 @@ const ElasticView: React.FC<ElasticViewProps> = ({
       .forceSimulation<SimulationNode>([])
       .force(
         'x',
-        d3.forceX<SimulationNode>((d) => d.homeX).strength(0.05),
+        d3.forceX<SimulationNode>((d) => d.homeX).strength(forceStrength),
       )
       .force(
         'y',
-        d3.forceY<SimulationNode>((d) => d.homeY).strength(0.05),
+        d3.forceY<SimulationNode>((d) => d.homeY).strength(forceStrength),
       )
       .force(
         'collide',
         d3.forceCollide<SimulationNode>((d) => d.r).strength(1),
       )
+      .alphaDecay(alphaDecay)
       .on('tick', () => {
         setAnimatedNodes([...simulation.nodes()]);
       });
@@ -53,7 +60,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
     return () => {
       simulation.stop();
     };
-  }, []);
+  }, [forceStrength, alphaDecay]);
 
   useEffect(() => {
     if (!simulationRef.current) return;
@@ -69,7 +76,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
           ...camera,
           homeX: camera.screenX,
           homeY: camera.screenY,
-          r: boxWidth / 2 + 4, // collision radius + padding
+          r: boxWidth / 2 + collisionPadding, // collision radius + padding
           x: oldNode?.x ?? camera.screenX,
           y: oldNode?.y ?? camera.screenY,
           vx: oldNode?.vx,
@@ -81,7 +88,7 @@ const ElasticView: React.FC<ElasticViewProps> = ({
 
     simulationRef.current.nodes(newNodes);
     simulationRef.current.alpha(0.3).restart();
-  }, [cameras, boxWidth]);
+  }, [cameras, boxWidth, collisionPadding]);
 
   return (
     <>
