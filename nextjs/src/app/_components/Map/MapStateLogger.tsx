@@ -2,6 +2,7 @@
 
 import { useMap } from "@vis.gl/react-google-maps";
 import { useEffect, useState } from "react";
+import { useMapStore } from "~/app/_stores/mapStore";
 
 export function MapStateLogger() {
   const map = useMap();
@@ -11,6 +12,7 @@ export function MapStateLogger() {
   const [dragging, setDragging] = useState(false);
   const [dragEnd, setDragEnd] = useState(false);
   const [idle, setIdle] = useState(false);
+  const isIdleFromStore = useMapStore((state) => state.isIdle);
 
   useEffect(() => {
     if (!map) return;
@@ -164,6 +166,20 @@ export function MapStateLogger() {
         }}
       >
         idle
+      </div>
+      <div
+        style={{
+          padding: "10px",
+          backgroundColor: isIdleFromStore
+            ? "hsl(60 80% 60%)"
+            : "hsl(60 20% 40%)",
+          color: "white",
+          borderRadius: "5px",
+          transition: "background-color 0.1s ease-in-out",
+          fontFamily: "monospace",
+        }}
+      >
+        idle state
       </div>
     </div>
   );
