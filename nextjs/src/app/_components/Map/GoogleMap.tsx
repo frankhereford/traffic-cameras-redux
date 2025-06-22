@@ -13,6 +13,7 @@ import { useMapStore } from "~/app/_stores/mapStore";
 import { type EnhancedCamera } from "~/app/_stores/enhancedCameraStore";
 import { CameraMarkers } from "./CameraMarkers";
 import { MapStateLogger } from "./MapStateLogger";
+import { MapStatePoller } from "./MapStatePoller";
 
 const containerStyle = {
   width: "100vw",
@@ -75,53 +76,54 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
   const initialZoom = 17;
   const initialPosition = { lat: 30.262531, lng: -97.753983 };
   const updateMapState = useMapStore((state) => state.updateMapState);
+  const setIsIdle = useMapStore((state) => state.setIsIdle);
 
   // Handle camera changes using React event handler
   const handleCameraChanged = useCallback(
     (ev: MapCameraChangedEvent) => {
       // console.log("cameraChanged", ev)
-      const { zoom, center, bounds } = ev.detail;
+      setIsIdle(false);
+      // const { zoom, center, bounds } = ev.detail;
 
-      if (center && bounds) {
-        updateMapState(
-          zoom,
-          center,
-          {
-            north: bounds.north,
-            south: bounds.south,
-            east: bounds.east,
-            west: bounds.west,
-          },
-          false,
-        );
-      }
+      // if (center && bounds) {
+      //   updateMapState(
+      //     zoom,
+      //     center,
+      //     {
+      //       north: bounds.north,
+      //       south: bounds.south,
+      //       east: bounds.east,
+      //       west: bounds.west,
+      //     },
+      //   );
+      // }
     },
-    [updateMapState],
+    [updateMapState, setIsIdle],
   );
 
   const handleOnIdle = useCallback(
     (ev: MapEvent) => {
-      const zoom = ev.map.getZoom();
-      const center = ev.map.getCenter();
-      const bounds = ev.map.getBounds();
+      setIsIdle(false);
+      // const zoom = ev.map.getZoom();
+      // const center = ev.map.getCenter();
+      // const bounds = ev.map.getBounds();
 
-      if (zoom && center && bounds) {
-        const ne = bounds.getNorthEast();
-        const sw = bounds.getSouthWest();
-        updateMapState(
-          zoom,
-          { lat: center.lat(), lng: center.lng() },
-          {
-            north: ne.lat(),
-            south: sw.lat(),
-            east: ne.lng(),
-            west: sw.lng(),
-          },
-          true,
-        );
-      }
+      // if (zoom && center && bounds) {
+      //   const ne = bounds.getNorthEast();
+      //   const sw = bounds.getSouthWest();
+      //   updateMapState(
+      //     zoom,
+      //     { lat: center.lat(), lng: center.lng() },
+      //     {
+      //       north: ne.lat(),
+      //       south: sw.lat(),
+      //       east: ne.lng(),
+      //       west: sw.lng(),
+      //     },
+      //   );
+      // }
     },
-    [updateMapState],
+    [updateMapState, setIsIdle],
   );
 
 
@@ -144,6 +146,7 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
         >
           <MapProjectionSetup />
           <MapStateLogger />
+          <MapStatePoller />
           <CameraMarkers cameras={cameraData} />
         </Map>
       </div>
