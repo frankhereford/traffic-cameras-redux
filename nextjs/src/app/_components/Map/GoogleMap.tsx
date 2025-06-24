@@ -88,7 +88,7 @@ function GoogleMap({ cameraData }: MapViewProps) { // we're going to replace thi
 
   const handleOnIdle = useCallback(
     (ev: MapEvent) => {
-      setIsIdle(false);
+      setIsIdle(true);
     },
     [updateMapState, setIsIdle],
   );
