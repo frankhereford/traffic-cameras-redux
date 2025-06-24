@@ -9,7 +9,7 @@ export type CameraImagesProps = {
 const CameraImages: React.FC<CameraImagesProps> = ({ cameraData }) => {
   return (
     // Full-viewport overlay above the map
-    <div className="pointer-events-none fixed inset-0 z-20">
+    <div className="pointer-events-none fixed inset-0">
       <InteractiveCameraViews cameraData={cameraData} />
     </div>
   );
