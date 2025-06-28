@@ -10,9 +10,10 @@ const BOX_HEIGHT = Math.round(1080 * SCALE_FACTOR);
 
 interface CameraImageProps {
   camera: EnhancedCamera;
+  isEnlarged?: boolean;
 }
 
-const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
+const CameraImage: React.FC<CameraImageProps> = ({ camera, isEnlarged = false }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -67,6 +68,8 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
   // Don't render the box if there's an error or camera is unavailable
   if (hasError) return null;
 
+  const finalScale = isEnlarged ? 2 : 1;
+
   return (
     <div
       style={{
@@ -82,11 +85,12 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        border: '2px solid rgba(255, 255, 255, 0.3)',
+        border: `2px solid ${isEnlarged ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.3)'}`,
         transformOrigin: 'center center',
         opacity: imageUrl ? 1 : 0,
-        transform: imageUrl ? 'scale(1) translateY(0) rotate(0deg)' : `scale(0.8) translateY(20px) rotate(${rotation}deg)`,
-        transition: 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.2s ease-out',
+        transform: imageUrl ? `scale(${finalScale})` : `scale(0.8) translateY(20px) rotate(${rotation}deg)`,
+        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        zIndex: isEnlarged ? 100 : 1,
       }}
     >
       {isLoading && (
