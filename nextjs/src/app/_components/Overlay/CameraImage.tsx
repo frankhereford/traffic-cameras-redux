@@ -18,6 +18,7 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera, isEnlarged = false })
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [rotation] = useState(Math.random() * 30 - 15);
+  const utils = api.useUtils();
 
   const getJwtMutation = api.camera.getJwt.useMutation({
     onSuccess: (data) => {
@@ -30,6 +31,7 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera, isEnlarged = false })
             console.log(`Camera ${camera.camera_id} is unavailable`);
             setHasError(true);
             setIsLoading(false);
+            void utils.camera.getWorkingCameras.invalidate();
             return;
           }
           
@@ -42,12 +44,14 @@ const CameraImage: React.FC<CameraImageProps> = ({ camera, isEnlarged = false })
           console.error(`Error loading camera ${camera.camera_id}:`, error);
           setHasError(true);
           setIsLoading(false);
+          void utils.camera.getWorkingCameras.invalidate();
         });
     },
     onError: (error) => {
       console.error(`Error getting JWT for camera ${camera.camera_id}:`, error);
       setHasError(true);
       setIsLoading(false);
+      void utils.camera.getWorkingCameras.invalidate();
     }
   });
 
