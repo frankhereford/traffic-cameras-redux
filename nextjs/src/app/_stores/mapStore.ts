@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import _ from 'lodash';
 
 interface LatLngBounds {
   north: number;
@@ -38,7 +39,7 @@ export type MapStore = MapState & MapActions & { isIdle: boolean };
 
 export const useMapStore = create<MapStore>()(
   devtools(
-    (set) => ({
+    (set, get) => ({
       zoom: 17,
       center: { lat: 30.262531, lng: -97.753983 },
       bounds: null,
@@ -49,6 +50,11 @@ export const useMapStore = create<MapStore>()(
       setBounds: (bounds) => set({ bounds }),
       setProjection: (projection) => set({ projection }),
       updateMapState: (zoom, center, bounds) => {
+        const currentBounds = get().bounds;
+        if (_.isEqual(currentBounds, bounds)) {
+          return;
+        }
+        
         console.debug("Map extents changed:", {
           zoom,
           center,

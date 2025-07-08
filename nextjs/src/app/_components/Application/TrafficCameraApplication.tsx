@@ -10,6 +10,7 @@ import useVisibleCameras from "~/app/_hooks/useVisibleCameras";
 import useEnhancedCameras from "~/app/_hooks/useEnhancedCameras";
 
 import useEnhancedCameraStore from '~/app/_stores/enhancedCameraStore';
+import Sidebar from '~/app/_components/Sidebar/Sidebar';
 
 export function TrafficCameraApplication() {
   useSocrataData(); // download the data and store it in the cameraStore.
@@ -21,6 +22,7 @@ export function TrafficCameraApplication() {
   return (
     <>
       <GoogleMap cameraData={enhancedCameras} />
+      <Sidebar />
       <CameraImages cameraData={enhancedCameras} />
     </>
   );
